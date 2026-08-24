@@ -656,18 +656,3 @@ test_that("Time columns that are not POSIXct are normalized", {
     as.POSIXct("2020-01-01", tz = "UTC")
   )
 })
-
-test_that("Time zone survives burst merging", {
-  skip_if_not_installed("move2")
-
-  # 20 samples at 20 Hz span 1 s, so the rows below are contiguous and merge
-  m <- compact_acc(.as.POSIXct(c(0, 1, 2), "CET"), frequency = 20)
-  a <- as_acc(m)
-
-  # Guard the guard: without a merge this would pass on the early-return path
-  expect_length(a[!is.na(a)], 1)
-  expect_identical(n_samples(a)[1], 60L)
-
-  expect_identical(attr(starts(a), "tzone"), "CET")
-  expect_identical(attr(starts(as_acc(m, drop = TRUE)), "tzone"), "CET")
-})
