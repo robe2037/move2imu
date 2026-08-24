@@ -76,7 +76,7 @@ summary.imu <- function(object, ...) {
     out$start_range <- NULL
   }
 
-  out$start_tz <- attr(st_valid, "tzone") %||% "UTC"
+  out$start_tz <- attr(st_valid, "tzone") %||% ""
 
   # Inter-burst intervals. Don't use burst_intervals() to avoid recomputing
   # components. If bursts come from different sources some intervals will be

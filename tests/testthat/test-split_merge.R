@@ -10,7 +10,7 @@ test_that("Can combine adjacent bursts into single burst", {
       acc_burst_example(121:150, 121:150)
     ),
     frequency = units::set_units(10, "Hz"),
-    start = as.POSIXct(c(0, 3, 6, 20, 50), tz = "UTC")
+    start = .as.POSIXct(c(0, 3, 6, 20, 50))
   )
 
   a2 <- merge_imu(a, drop = TRUE)
@@ -19,7 +19,7 @@ test_that("Can combine adjacent bursts into single burst", {
   expect_length(a2, 3)
 
   expect_equal(n_samples(a2), as.integer(c(90, 30, 30)))
-  expect_identical(starts(a2), as.POSIXct(c(0, 20, 50), tz = "UTC"))
+  expect_identical(starts(a2), .as.POSIXct(c(0, 20, 50)))
 
   # Merged burst data matches concatenated originals
   expect_equal(
@@ -55,7 +55,7 @@ test_that("Same merged result if drop = TRUE regardless of NAs", {
       acc_burst_example(61:90, 61:90)
     ),
     frequency = units::set_units(10, "Hz"),
-    start = as.POSIXct(c(0, 3, 6), tz = "UTC")
+    start = .as.POSIXct(c(0, 3, 6))
   )
   a2 <- c(
     a1[1],
@@ -72,13 +72,13 @@ test_that("Can combine adjacent bursts with embedded NA", {
     acc(
       c(acc_burst_example(1:30), acc_burst_example(31:60)),
       frequency = units::set_units(10, "Hz"),
-      start = as.POSIXct(c(0, 3), tz = "UTC")
+      start = .as.POSIXct(c(0, 3))
     ),
     acc(list(NULL), units::set_units(NA, "Hz")),
     acc(
       c(acc_burst_example(61:90), acc_burst_example(91:120)),
       frequency = units::set_units(10, "Hz"),
-      start = as.POSIXct(c(20, 23), tz = "UTC")
+      start = .as.POSIXct(c(20, 23))
     )
   )
 
@@ -87,7 +87,7 @@ test_that("Can combine adjacent bursts with embedded NA", {
   expect_true(is_acc(a2))
   expect_length(a2, 2)
   expect_equal(n_samples(a2), as.integer(c(60, 60)))
-  expect_identical(starts(a2), as.POSIXct(c(0, 20), tz = "UTC"))
+  expect_identical(starts(a2), .as.POSIXct(c(0, 20)))
 
   # drop = FALSE should only change indexing, not merged values
   a3 <- merge_imu(a, drop = FALSE)
@@ -133,7 +133,7 @@ test_that("Partial merge with drop = FALSE respects ID boundaries", {
       acc_burst_example(91:120)
     ),
     frequency = units::set_units(10, "Hz"),
-    start = as.POSIXct(c(0, 3, 6, 9), tz = "UTC")
+    start = .as.POSIXct(c(0, 3, 6, 9))
   )
 
   merged <- merge_imu(a, ids = c("a", "a", "b", "b"), drop = FALSE)
@@ -154,7 +154,7 @@ test_that("Do not combine bursts with different axes", {
   a <- acc(
     list(b_xyz1, b_xy, b_xyz2),
     frequency = units::set_units(10, "Hz"),
-    start = as.POSIXct(c(0, 1, 1.5), tz = "UTC")
+    start = .as.POSIXct(c(0, 1, 1.5))
   )
 
   expect_identical(merge_imu(a), a)
@@ -174,7 +174,7 @@ test_that("Do not combine bursts with different frequencies", {
       acc_burst_example(41:50, 41:50)
     ),
     frequency = units::set_units(c(10, 20, 10), "Hz"),
-    start = as.POSIXct(c(0, 2, 3), tz = "UTC")
+    start = .as.POSIXct(c(0, 2, 3))
   )
 
   expect_identical(merge_imu(a), a)
@@ -191,7 +191,7 @@ test_that("Do not combine bursts with different IDs", {
       acc_burst_example(91:120)
     ),
     frequency = units::set_units(10, "Hz"),
-    start = as.POSIXct(c(0, 3, 6, 9), tz = "UTC")
+    start = .as.POSIXct(c(0, 3, 6, 9))
   )
 
   a2 <- merge_imu(a, ids = c(1, 1, 1, 2), drop = TRUE)
@@ -211,7 +211,7 @@ test_that("Do not combine bursts with different units", {
       acc_burst_example(91:120)
     ),
     frequency = units::set_units(10, "Hz"),
-    start = as.POSIXct(c(0, 3, 6, 9), tz = "UTC")
+    start = .as.POSIXct(c(0, 3, 6, 9))
   )
 
   a_mixed <- c(
@@ -265,7 +265,7 @@ test_that("split_imu() on single-element acc returns length-1 list", {
   a <- acc(
     acc_burst_example(1:20),
     frequency = units::set_units(10, "Hz"),
-    start = as.POSIXct(0, tz = "UTC")
+    start = .as.POSIXct(0)
   )
 
   sp <- split_imu(a, 0.5)
@@ -280,7 +280,7 @@ test_that("Can split acc at a given interval", {
   a <- acc(
     c(acc_burst_example(1:60, 1:60), acc_burst_example(101:140)),
     frequency = c(units::set_units(20, "Hz"), units::set_units(40, "Hz")),
-    start = as.POSIXct(c(0, 10), tz = "UTC")
+    start = .as.POSIXct(c(0, 10))
   )
 
   interval <- 0.5
@@ -330,7 +330,7 @@ test_that("Correctly split when burst length not divisible by interval", {
   a <- acc(
     c(acc_burst_example(1:60, 1:60), acc_burst_example(101:140)),
     frequency = c(units::set_units(20, "Hz"), units::set_units(40, "Hz")),
-    start = as.POSIXct(c(0, 10), tz = "UTC")
+    start = .as.POSIXct(c(0, 10))
   )
 
   interval <- 0.7
@@ -355,7 +355,7 @@ test_that("split_imu() retains NA", {
   a <- acc(
     c(acc_burst_example(1:60, 1:60), new_burst_list(list(NULL), "acc"), acc_burst_example(101:140)),
     frequency = c(units::set_units(20, "Hz"), units::set_units(NA, "Hz"), units::set_units(40, "Hz")),
-    start = as.POSIXct(c(0, 10, 10), tz = "UTC")
+    start = .as.POSIXct(c(0, 10, 10))
   )
 
   sp <- split_imu(a, 0.5)
@@ -376,7 +376,7 @@ test_that("Can recover split continuous data by merging", {
   a <- acc(
     c(acc_burst_example(1:60, 1:60), acc_burst_example(101:140)),
     frequency = c(units::set_units(20, "Hz"), units::set_units(40, "Hz")),
-    start = as.POSIXct(c(0, 10), tz = "UTC")
+    start = .as.POSIXct(c(0, 10))
   )
 
   flat <- purrr::reduce(split_imu(a, interval = 0.5), c)
@@ -387,7 +387,7 @@ test_that("Can recover split continuous data by merging with NA", {
   a <- acc(
     c(acc_burst_example(1:60, 1:60), new_burst_list(list(NULL), "acc"), acc_burst_example(101:140)),
     frequency = c(units::set_units(20, "Hz"), units::set_units(NA, "Hz"), units::set_units(40, "Hz")),
-    start = as.POSIXct(c(0, 10, 10), tz = "UTC")
+    start = .as.POSIXct(c(0, 10, 10))
   )
 
   flat <- purrr::reduce(split_imu(a, interval = 0.5), c)
@@ -398,7 +398,7 @@ test_that("split_imu() preserves 1-sample bursts", {
   a <- acc(
     c(acc_burst_example(42, 43), acc_burst_example(1:20, 1:20)),
     frequency = units::set_units(10, "Hz"),
-    start = as.POSIXct(c(0, 5), tz = "UTC")
+    start = .as.POSIXct(c(0, 5))
   )
 
   sp <- split_imu(a, 0.5)
@@ -420,7 +420,7 @@ test_that("Long intervals do not modify input acc", {
   a <- acc(
     c(acc_burst_example(1:60, 1:60), acc_burst_example(101:140)),
     frequency = c(units::set_units(20, "Hz"), units::set_units(40, "Hz")),
-    start = as.POSIXct(c(0, 10), tz = "UTC")
+    start = .as.POSIXct(c(0, 10))
   )
 
   split <- split_imu(a, interval = max(burst_dur(a)))
@@ -431,7 +431,7 @@ test_that("Can standardize interval units when splitting", {
   a <- acc(
     c(acc_burst_example(1:60, 1:60), acc_burst_example(101:140)),
     frequency = c(units::set_units(20, "Hz"), units::set_units(40, "Hz")),
-    start = as.POSIXct(c(0, 10), tz = "UTC")
+    start = .as.POSIXct(c(0, 10))
   )
 
   split <- split_imu(a, interval = 0.5)
@@ -451,7 +451,7 @@ test_that("split_imu() errors on invalid interval", {
   a <- acc(
     acc_burst_example(1:20),
     frequency = units::set_units(10, "Hz"),
-    start = as.POSIXct(0, tz = "UTC")
+    start = .as.POSIXct(0)
   )
 
   expect_error(split_imu(a, 0), "`interval` must be a positive")
@@ -462,7 +462,7 @@ test_that("merge_imu validates ids length", {
   a <- acc(
     c(acc_burst_example(1:30), acc_burst_example(31:60), acc_burst_example(61:90)),
     frequency = units::set_units(10, "Hz"),
-    start = as.POSIXct(c(0, 3, 6), tz = "UTC")
+    start = .as.POSIXct(c(0, 3, 6))
   )
 
   expect_error(merge_imu(a, ids = c(1, 1)), "same length")
@@ -474,12 +474,12 @@ test_that("split_imu start times track actual samples for non-integer chunks", {
   b <- acc(
     list(cbind(X = 1:30)),
     frequency = units::set_units(20, "Hz"),
-    start = as.POSIXct(0, tz = "UTC")
+    start = .as.POSIXct(0)
   )
   sp <- split_imu(b, 0.125)[[1]]
 
   first_idx <- cumsum(c(1L, utils::head(n_samples(sp), -1)))
-  expected <- as.POSIXct(0, tz = "UTC") + (first_idx - 1) / 20
+  expected <- .as.POSIXct(0) + (first_idx - 1) / 20
 
   expect_identical(starts(sp), expected)
 })
@@ -488,7 +488,7 @@ test_that("split_imu() passes through non-empty bursts with a missing frequency"
   a_naf <- acc(
     list(cbind(X = 1:5)),
     frequency = units::set_units(NA, "Hz"),
-    start = as.POSIXct(0, tz = "UTC")
+    start = .as.POSIXct(0)
   )
 
   split <- split_imu(a_naf, 0.5)
@@ -502,7 +502,7 @@ test_that("split_imu() passes through non-empty bursts with a missing frequency"
     acc(
       list(cbind(X = 1:40)),
       frequency = units::set_units(20, "Hz"),
-      start = as.POSIXct(0, tz = "UTC")
+      start = .as.POSIXct(0)
     ),
     a_naf
   )
@@ -530,7 +530,7 @@ test_that("split_imu() round-trip in dataframe workflow", {
       units::set_units(NA, "Hz"),
       units::set_units(10, "Hz"), units::set_units(40, "Hz")
     ),
-    start = as.POSIXct(c(0, 3, 10, 20, 30), tz = "UTC")
+    start = .as.POSIXct(c(0, 3, 10, 20, 30))
   )
 
   tbl <- tibble::tibble(
@@ -556,7 +556,7 @@ test_that("merge_imu() errors on invalid tolerances", {
   a <- acc(
     c(acc_burst_example(1:30, 1:30), acc_burst_example(31:60, 31:60)),
     frequency = units::set_units(10, "Hz"),
-    start = as.POSIXct(c(0, 3), tz = "UTC")
+    start = .as.POSIXct(c(0, 3))
   )
 
   expect_error(merge_imu(a, gap_tol = -1), "`gap_tol` must be greater than")
@@ -572,7 +572,7 @@ test_that("gap_tol bridges a small boundary glitch", {
       acc_burst_example(31:60, 31:60)
     ),
     frequency = units::set_units(10, "Hz"),
-    start = as.POSIXct(c(0, 3.0005), tz = "UTC")
+    start = .as.POSIXct(c(0, 3.0005))
   )
 
   # Default gap_tol keeps them separate (exact adjacency required).
@@ -594,7 +594,7 @@ test_that("freq_tol controls merging across a small frequency glitch", {
       acc_burst_example(31:60, 31:60)
     ),
     frequency = units::set_units(c(10, 10.001), "Hz"),
-    start = as.POSIXct(c(0, 3), tz = "UTC")
+    start = .as.POSIXct(c(0, 3))
   )
 
   # freq_tol is relative: the default (1%) treats a sub-percent glitch as
@@ -612,13 +612,13 @@ test_that("freq_tol is symmetric in burst order", {
   a1 <- acc(
     c(acc_burst_example(1:30, 1:30), acc_burst_example(31:60, 31:60)),
     frequency = units::set_units(c(f1, f2), "Hz"),
-    start = as.POSIXct(c(0, 30 / f1), tz = "UTC")
+    start = .as.POSIXct(c(0, 30 / f1))
   )
   
   a2 <- acc(
     c(acc_burst_example(1:30, 1:30), acc_burst_example(31:60, 31:60)),
     frequency = units::set_units(c(f2, f1), "Hz"),
-    start = as.POSIXct(c(0, 30 / f2), tz = "UTC")
+    start = .as.POSIXct(c(0, 30 / f2))
   )
   
   m1 <- merge_imu(a1, drop = TRUE)
@@ -638,7 +638,7 @@ test_that("merged frequency is recomputed from the burst span", {
       acc_burst_example(31:60, 31:60)
     ),
     frequency = units::set_units(10, "Hz"),
-    start = as.POSIXct(c(0, 3), tz = "UTC")
+    start = .as.POSIXct(c(0, 3))
   )
   expect_equal(as.numeric(freqs(merge_imu(a, drop = TRUE))), 10)
 
@@ -650,7 +650,7 @@ test_that("merged frequency is recomputed from the burst span", {
       acc_burst_example(31:60, 31:60)
     ),
     frequency = units::set_units(10, "Hz"),
-    start = as.POSIXct(c(0, 3.0005), tz = "UTC")
+    start = .as.POSIXct(c(0, 3.0005))
   )
   merged <- merge_imu(b, gap_tol = 0.001, drop = TRUE)
   expect_equal(as.numeric(freqs(merged)), signif(59 / 5.9005, 6))
@@ -661,17 +661,17 @@ test_that("Burst with no frequency does not merge", {
     acc(
       acc_burst_example(1:30, 1:30),
       frequency = units::set_units(10, "Hz"),
-      start = as.POSIXct(0, tz = "UTC")
+      start = .as.POSIXct(0)
     ),
     acc(
       acc_burst_example(31, 31),
       frequency = units::set_units(NA, "Hz"),
-      start = as.POSIXct(3, tz = "UTC")
+      start = .as.POSIXct(3)
     ),
     acc(
       acc_burst_example(32:61, 32:61),
       frequency = units::set_units(10, "Hz"),
-      start = as.POSIXct(3.1, tz = "UTC")
+      start = .as.POSIXct(3.1)
     )
   )
 
@@ -683,12 +683,12 @@ test_that("Two adjacent frequency-less bursts do not merge", {
     acc(
       acc_burst_example(1, 1),
       frequency = units::set_units(NA, "Hz"),
-      start = as.POSIXct(0, tz = "UTC")
+      start = .as.POSIXct(0)
     ),
     acc(
       acc_burst_example(2, 2),
       frequency = units::set_units(NA, "Hz"),
-      start = as.POSIXct(0.1, tz = "UTC")
+      start = .as.POSIXct(0.1)
     )
   )
 
@@ -702,12 +702,12 @@ test_that("A single-sample burst with a defined frequency merges normally", {
     acc(
       acc_burst_example(1:30, 1:30),
       frequency = units::set_units(10, "Hz"),
-      start = as.POSIXct(0, tz = "UTC")
+      start = .as.POSIXct(0)
     ),
     acc(
       acc_burst_example(31, 31),
       frequency = units::set_units(10, "Hz"),
-      start = as.POSIXct(3, tz = "UTC")
+      start = .as.POSIXct(3)
     )
   )
 
@@ -716,4 +716,29 @@ test_that("A single-sample burst with a defined frequency merges normally", {
   expect_equal(n_samples(merged), 31L)
   expect_equal(as.numeric(starts(merged)), 0)
   expect_equal(as.numeric(freqs(merged)), 10)
+})
+
+test_that("merge_imu preserves the input time zone when bursts merge", {
+  for (tz in c("UTC", "CET", "America/New_York", "")) {
+    # 60 samples at 20 Hz span 3 s, so the two bursts are contiguous and merge
+    a <- acc(
+      list(cbind(X = 1:60), cbind(X = 61:120)),
+      frequency = units::set_units(20, "Hz"),
+      start = .as.POSIXct(c(0, 3), tz)
+    )
+
+    kept <- merge_imu(a, drop = FALSE)
+    dropped <- merge_imu(a, drop = TRUE)
+
+    # Must make sure the bursts actually merge and don't hit an early return
+    # branch in merge_imu()
+    expect_length(dropped, 1)
+    expect_identical(n_samples(dropped), 120L)
+
+    expect_identical(attr(starts(kept), "tzone"), tz)
+    expect_identical(attr(starts(dropped), "tzone"), tz)
+
+    # The merged start is the first burst's start, unchanged
+    expect_identical(starts(dropped), .as.POSIXct(0, tz))
+  }
 })

@@ -6,7 +6,9 @@
 #' combined incorrectly. See examples.
 #'
 #' @inheritParams n_axis
-#' @param ylab A character with the y axis label
+#' @param ... Passed to [dygraphs::dygraph()] (for instance, to label axes).
+#'
+#' @returns A [dygraphs::dygraph()] with one series per IMU axis.
 #'
 #' @seealso [plot_sampling_effort()] to plot sample collection times.
 #'
@@ -24,7 +26,21 @@
 #'
 #' # To avoid this issue, plot only a single deployment's values:
 #' plot_imu_trace(a[move2::mt_track_id(alb) == "4261-2228"])
-plot_imu_trace <- function(x, ylab = "Value") {
+#'
+#' # Label axes by passing arguments to `dygraph()`:
+#' plot_imu_trace(acc_example(), main = "Wing beats", ylab = "Acceleration (g)")
+#'
+#' # Use other `dygraphs` layers to further modify the plot. For instance,
+#' # to label the time axis in UTC instead of the browser time zone:
+#' plot_imu_trace(acc_example()) |>
+#'   dygraphs::dyOptions(labelsUTC = TRUE)
+#'
+#' # The data used to build the plot keep a time zone record. You can plot
+#' # the trace in the data time zone as follows. (Note that this may produce a
+#' # blank plot for some dygraphs distributions.)
+#' plot_imu_trace(acc_example()) |>
+#'   dygraphs::dyOptions(useDataTimezone = TRUE)
+plot_imu_trace <- function(x, ...) {
   rlang::check_installed(c("dygraphs", "dplyr"))
 
   time <- starts(x)
@@ -62,17 +78,15 @@ plot_imu_trace <- function(x, ylab = "Value") {
     },
     x = freqs(x)[keep],
     n = n_samples(x)[keep],
-    SIMPLIFY = F
+    SIMPLIFY = FALSE
   )
 
   df <- dplyr::bind_cols(
-    time = do.call("c", mapply("+", time[keep], dt, SIMPLIFY = F)),
+    time = do.call("c", mapply("+", time[keep], dt, SIMPLIFY = FALSE)),
     dplyr::bind_rows(
       lapply(bursts(x)[keep], function(x) rbind(data.frame(x), NA))
     )
   )
 
-  dygraphs::dygraph(df) |>
-    dygraphs::dyRibbon() |>
-    dygraphs::dyAxis("y", ylab)
+  dygraphs::dygraph(df, ...)
 }

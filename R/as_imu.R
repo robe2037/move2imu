@@ -79,21 +79,26 @@ as_imu_move2_ <- function(x,
                           force_int = NULL,
                           ...) {
   check_colset(x, colset)
-  
+
   imu_rows <- imu_sample_rows(x, sensor = sensor, colset = colset)
-  
+
   if (any(imu_rows) && any(is.na(move2::mt_time(x[imu_rows, ])))) {
     cli::cli_abort("All timestamps associated with IMU data must be non-NA.")
   }
-  
+
   if (any(imu_rows) && !isTRUE(move2::mt_is_time_ordered(x[imu_rows, ], non_zero = TRUE))) {
     cli::cli_abort(c(
       "Timestamps must be strictly increasing within each track.",
       "i" = "Order data by track and time and remove duplicate timestamps. See `move2::mt_filter_unique()`."
     ))
   }
-  
+
   type <- colset_type(colset)
+
+  # move2 allows time columns as numeric, `Date`, or `POSIXt`, but `imu` objects
+  # must have starts in `POSIXct`. Normalize to POSIXct here to standardize
+  # downstream workflows.
+  timestamp <- timestamp_to_POSIXct(move2::mt_time(x))
 
   if (type == "expanded") {
     out <- as_imu_move2_expanded(
@@ -102,6 +107,7 @@ as_imu_move2_ <- function(x,
       sensor = sensor,
       min_freq = min_freq,
       freq_tol = freq_tol,
+      timestamp = timestamp,
       ...
     )
   } else if (type == "compact") {
@@ -114,7 +120,7 @@ as_imu_move2_ <- function(x,
       x[[colset[["axes"]]]],
       x[[colset[["frequency"]]]],
       sensor = sensor,
-      timestamp = move2::mt_time(x),
+      timestamp = timestamp,
       force_int = force_int %||% is_acc_eobs_cols,
       ...
     )
@@ -182,7 +188,7 @@ as_imu_move2_expanded <- function(x,
                                   sensor,
                                   min_freq = 0,
                                   freq_tol = 1e-2,
-                                  timestamp = move2::mt_time(x),
+                                  timestamp = timestamp_to_POSIXct(move2::mt_time(x)),
                                   ...) {
   col_names <- as.character(colset)
   m <- as.matrix(as.data.frame(x)[, col_names])
@@ -201,7 +207,8 @@ as_imu_move2_expanded <- function(x,
     x,
     colset = colset,
     min_freq = min_freq,
-    freq_tol = freq_tol
+    freq_tol = freq_tol,
+    timestamp = timestamp
   )
   burst_idx <- parsed$bursts
 
@@ -218,7 +225,7 @@ as_imu_move2_expanded <- function(x,
       sensor,
       bursts = list(NULL),
       frequency = units::set_units(NA, "Hz"),
-      start = as.POSIXct(NA, tz = attr(timestamp, "tzone") %||% "UTC")
+      start = as.POSIXct(NA, tz = attr(timestamp, "tzone") %||% "")
     ),
     nrow(x)
   )
@@ -307,13 +314,18 @@ which_imu_vals <- function(x, colset) {
 #'
 #' @inheritParams as_acc
 #' @param x move2 object with expanded-format IMU data
+#' @param timestamp Sample timestamps of `x`, as POSIXct.
 #'
 #' @returns A list with elements `bursts` and `freq`. The former is a list
 #'   whose elements indicate the row indices of `x` belonging to that burst.
 #'   The latter is the derived sampling frequency of each burst. Elements of
 #'   each match by index.
 #' @noRd
-parse_bursts <- function(x, colset, min_freq = 0, freq_tol = 1e-2) {
+parse_bursts <- function(x,
+                         colset,
+                         min_freq = 0,
+                         freq_tol = 1e-2,
+                         timestamp = timestamp_to_POSIXct(move2::mt_time(x))) {
   # Coerce to Hz at the boundary so `1 / min_freq` below is in seconds,
   # matching the second-based sample intervals, regardless of the unit supplied.
   min_freq <- as_hz(min_freq)
@@ -335,12 +347,12 @@ parse_bursts <- function(x, colset, min_freq = 0, freq_tol = 1e-2) {
     idx,
     function(i) {
       i <- unname(i)
-      
+
       if (length(i) < 2) {
         return(list(bursts = list(i), freq = NA_real_))
       }
 
-      samp_times <- as.numeric(move2::mt_time(x[i, ]))
+      samp_times <- as.numeric(timestamp[i])
 
       # Identify runs of consistent sampling frequency, within the tolerance
       is_freq_change <- freq_changes(diff(samp_times), freq_tol = freq_tol)
@@ -356,7 +368,7 @@ parse_bursts <- function(x, colset, min_freq = 0, freq_tol = 1e-2) {
           }
         )
       )
-      
+
       too_slow <- !is.na(run_intervals) & (run_intervals > min_interval)
       run_start <- is_freq_change | too_slow[run_id]
 

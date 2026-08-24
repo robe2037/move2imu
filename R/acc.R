@@ -18,9 +18,14 @@
 #'   `bursts`. Frequencies with compatible [units][units::units] are converted
 #'   to Hz internally. If no units are specified, the frequency is assumed to
 #'   be in Hz.
-#' @param start Optional; burst start times in POSIXct format. Either length 1
-#'   (recycled), the same length as `bursts`, or `NULL` if start
-#'   times are unknown.
+#' @param start Optional; burst start times. Either length 1 (recycled), the
+#'   same length as `bursts`, or `NULL` if start times are unknown.
+#'
+#'   Accepts `POSIXct`, `POSIXlt`, `Date`, or numeric values. `Date` objects
+#'   are treated as being recorded at midnight, UTC. Numeric values are
+#'   interpreted as the number of seconds since `1970-01-01 00:00:00 UTC`.
+#'   Inputs are all converted to `POSIXct`. For inputs with a specified time
+#'   zone, it is retained.
 #'
 #' @returns An IMU vector of the corresponding sensor type (`acc`,
 #'   `mag`, or `gyro`).

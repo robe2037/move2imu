@@ -13,8 +13,69 @@ acc_example <- function() {
       cbind(X = sin(1:20 / 10 + 2), Y = cos(1:20 / 10 + 3), Z = 1)
     ),
     frequency = units::set_units(c(20, 20), "Hz"),
-    start = as.POSIXct(c(0, 10), tz = "UTC")
+    start = as.POSIXct(c(0, 10), origin = "1970-01-01", tz = "UTC")
   )
+}
+
+# Coerce a timestamp vector to POSIXct. The single conversion point for every
+# timestamp a user or a `move2` hands the package, so that interior code and
+# `imu` storage only ever see POSIXct and a time zone is always well defined.
+#
+# The accepted set is everything that already denotes an instant:
+#
+#   POSIXct  kept as-is
+#   POSIXlt  the same instant and zone, in the non-canonical layout
+#   Date     midnight UTC
+#   numeric  seconds since 1970-01-01, UTC (also what move2 means by a numeric
+#            time column)
+#   NA       R's missing marker, carried through as a missing instant
+#
+# `Date` is converted by hand rather than with `as.POSIXct()`: that method only
+# began setting a "UTC" time zone in R 4.3, and silently ignores a `tz` argument
+# before that, so relying on it would yield local-time output on older R.
+#
+# returns TRUE for anything `timestamp_to_POSIXct()` accepts.
+#
+# `inherits()` rather than a bare `is.numeric()`: difftime and units objects are
+# numeric underneath, and reading their value as seconds would drop the unit.
+is_timestamp <- function(x) {
+  inherits(x, c("POSIXct", "POSIXlt", "Date")) ||
+    (is.logical(x) && all(is.na(x))) ||
+    (is.numeric(x) && !inherits(x, c("difftime", "units")))
+}
+
+timestamp_to_POSIXct <- function(x,
+                                 arg = rlang::caller_arg(x),
+                                 call = rlang::caller_env()) {
+  if (inherits(x, "POSIXct")) {
+    return(x)
+  }
+
+  if (inherits(x, "POSIXlt")) {
+    return(as.POSIXct(x))
+  }
+
+  if (inherits(x, "Date")) {
+    return(as.POSIXct(unclass(x) * 86400, origin = "1970-01-01", tz = "UTC"))
+  }
+
+  # A bare `NA` is unclassed; base `as.POSIXct()` special-cases it the same way
+  if (is.logical(x) && all(is.na(x))) {
+    return(as.POSIXct(x, tz = "UTC"))
+  }
+
+  if (!is_timestamp(x)) {
+    cli::cli_abort(
+      c(
+        "{.arg {arg}} must be a timestamp, not {.cls {class(x)[1]}}.",
+        "i" = "Supply a {.cls POSIXct}, {.cls POSIXlt}, {.cls Date}, or a
+               number of seconds since 1970-01-01 UTC."
+      ),
+      call = call
+    )
+  }
+
+  as.POSIXct(as.double(x), origin = "1970-01-01", tz = "UTC")
 }
 
 # Helper to snap a computed frequency to a stable precision.

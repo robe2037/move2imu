@@ -1,3 +1,10 @@
+# `as.POSIXct()` only gained a default `origin` in R 4.3, and this package
+# supports R >= 4.1. Calls must have an explicit origin to successfully pass
+# tests on old R releases.
+.as.POSIXct <- function(x, tz = "UTC") {
+  as.POSIXct(x, origin = "1970-01-01", tz = tz)
+}
+
 # Apply a single calibration to a single burst. Improves test legibility.
 transform_burst <- function(burst, calibration, ...) {
   burst_transformer(calibration, ...)(burst)
@@ -17,10 +24,7 @@ mag_example_expanded <- function(id = "expanded") {
     magnetic_field_x = as.numeric(1:10),
     magnetic_field_y = as.numeric(11:20),
     magnetic_field_z = as.numeric(21:30),
-    timestamp = as.POSIXct(
-      c(seq(1, 1.4, by = 0.1), seq(3, 3.4, by = 0.1)),
-      tz = "UTC"
-    ),
+    timestamp = .as.POSIXct(c(seq(1, 1.4, by = 0.1), seq(3, 3.4, by = 0.1))),
     x = 1, y = 1
   )
 
@@ -44,7 +48,7 @@ mag_example_compact <- function(id = "compact") {
       paste0(rep(1:5, each = 3), collapse = " "),
       paste0(rep(6:10, each = 3), collapse = " ")
     ),
-    timestamp = as.POSIXct(c(10, 30), tz = "UTC"),
+    timestamp = .as.POSIXct(c(10, 30)),
     x = 1, y = 1
   )
 
@@ -65,10 +69,7 @@ gyro_example_expanded <- function(id = "expanded") {
     angular_velocity_x = as.numeric(1:10),
     angular_velocity_y = as.numeric(11:20),
     angular_velocity_z = as.numeric(21:30),
-    timestamp = as.POSIXct(
-      c(seq(1, 1.4, by = 0.1), seq(3, 3.4, by = 0.1)),
-      tz = "UTC"
-    ),
+    timestamp = .as.POSIXct(c(seq(1, 1.4, by = 0.1), seq(3, 3.4, by = 0.1))),
     x = 1, y = 1
   )
 
@@ -92,7 +93,7 @@ gyro_example_compact <- function(id = "compact") {
       paste0(rep(1:5, each = 3), collapse = " "),
       paste0(rep(6:10, each = 3), collapse = " ")
     ),
-    timestamp = as.POSIXct(c(10, 30), tz = "UTC"),
+    timestamp = .as.POSIXct(c(10, 30)),
     x = 1, y = 1
   )
 
@@ -170,4 +171,32 @@ albatrosses_messy <- function() {
   )
 
   d
+}
+
+# Fabricated compact-format acc move2 built from an arbitrary timestamp vector.
+#
+# `timestamp` becomes the time column verbatim -- callers wanting POSIXct pass
+# POSIXct. That is deliberate rather than a convenience left undone: the
+# boundary-normalization tests have to hand `as_acc()` a raw `numeric` or `Date`
+# column, both of which move2 permits.
+#
+# Each row holds one 20-sample XYZ burst. The default `frequency` leaves a gap
+# between rows, while a frequency that makes each burst span the gap exercises
+# merging.
+compact_acc <- function(timestamp, frequency = 2000, id = "compact") {
+  t <- data.frame(
+    id = id,
+    eobs_acceleration_axes = "XYZ",
+    eobs_acceleration_sampling_frequency_per_axis = frequency,
+    eobs_accelerations_raw = paste0(rep(1:20, each = 3), collapse = " "),
+    timestamp = timestamp,
+    x = 1, y = 1
+  )
+
+  move2::mt_as_move2(
+    t,
+    coords = c("x", "y"),
+    time_column = "timestamp",
+    track_id_column = "id"
+  )
 }

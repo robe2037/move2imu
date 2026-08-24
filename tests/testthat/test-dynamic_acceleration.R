@@ -60,7 +60,7 @@ test_that("Single-sample burst returns zero", {
   a <- acc(
     acc_burst_example(1, 2, 3),
     frequency = units::set_units(10, "Hz"),
-    start = as.POSIXct(1, tz = "UTC")
+    start = .as.POSIXct(1)
   )
 
   # A single sample has colMeans equal to itself, so centered values are all 0

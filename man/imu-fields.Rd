@@ -39,6 +39,11 @@ start times for each burst in an IMU vector.
 Frequencies assigned with \verb{freqs<-} are converted to Hz if they are provided
 with compatible units attached. If no units are provided, the values are
 assumed to be in Hz already.
+
+Start times assigned with \verb{starts<-} accept \code{POSIXct}, \code{POSIXlt}, \code{Date},
+or a number of seconds since \verb{1970-01-01 00:00:00 UTC}. Start times are
+converted and stored as \code{POSIXct}. \code{Date} objects are treated as being
+recorded at midnight, UTC.
 }
 \examples{
 x <- acc(

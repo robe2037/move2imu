@@ -7,7 +7,7 @@ test_that("format renders each burst as parenthesized column means", {
       cbind(X = c(0, 8), Y = c(1, 1), Z = c(2, 4))
     ),
     frequency = units::set_units(c(20, 20), "Hz"),
-    start = as.POSIXct(c(0, 10), tz = "UTC")
+    start = .as.POSIXct(c(0, 10))
   )
   expect_identical(format(a), c("(2 3 5)", "(4 1 3)"))
 })
@@ -20,7 +20,7 @@ test_that("format rounds column means to two decimals", {
   a <- acc(
     list(cbind(X = 1.234, Y = 5.678, Z = 9)),
     frequency = units::set_units(20, "Hz"),
-    start = as.POSIXct(0, tz = "UTC")
+    start = .as.POSIXct(0)
   )
   expect_identical(format(a), "(1.23 5.68 9)")
 })
@@ -35,7 +35,7 @@ test_that("format appends the unit for bursts carrying units", {
   a <- acc(
     list(b1),
     frequency = units::set_units(20, "Hz"),
-    start = as.POSIXct(0, tz = "UTC")
+    start = .as.POSIXct(0)
   )
   expect_identical(format(a), "(2 3 10) [m/s^2]")
 })
@@ -48,7 +48,7 @@ footer_acc <- function(freq) {
   acc(
     lapply(seq_along(freq), function(i) cbind(X = i, Y = i, Z = i)),
     frequency = units::set_units(freq, "Hz"),
-    start = as.POSIXct(seq(0, by = 10, length.out = length(freq)), tz = "UTC")
+    start = .as.POSIXct(seq(0, by = 10, length.out = length(freq)))
   )
 }
 

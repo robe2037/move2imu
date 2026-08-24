@@ -56,7 +56,7 @@ test_that("summary excludes NA frequencies from the frequency range", {
       cbind(X = 7, Y = 8, Z = 9)
     ),
     frequency = units::set_units(c(10, NA, 20), "Hz"),
-    start = as.POSIXct(c(0, 10, 20), tz = "UTC")
+    start = .as.POSIXct(c(0, 10, 20))
   )
   s <- summary(a)
   expect_equal(s$freqs_rng, c(10, 20))
@@ -71,7 +71,7 @@ test_that("summary shows NA when every frequency is NA", {
   a <- acc(
     list(cbind(X = 1, Y = 2, Z = 3), cbind(X = 4, Y = 5, Z = 6)),
     frequency = units::set_units(c(NA, NA), "Hz"),
-    start = as.POSIXct(c(0, 10), tz = "UTC")
+    start = .as.POSIXct(c(0, 10))
   )
   s <- summary(a)
   expect_null(s$freqs_rng)

@@ -70,7 +70,7 @@
 #' a <- acc(
 #'   list(cbind(X = 1:60, Y = 1:60), cbind(X = 61:100, Y = 61:100), cbind(X = 101:140)),
 #'   frequency = units::set_units(20, "Hz"),
-#'   start = as.POSIXct(c(0, 3, 5), tz = "UTC")
+#'   start = as.POSIXct(c(0, 3, 5), origin = "1970-01-01", tz = "UTC")
 #' )
 #'
 #' merge_imu(a)
@@ -227,9 +227,21 @@ merge_imu <- function(x,
     start = sv[merged_i]
   )
 
-  # If retaining index matching, fill merged idx with NA entries
+  # If retaining index matching, fill merged idx with NA entries.
+  #
+  # The placeholder's time zone has to match the input's: `vec_assign()` casts
+  # the value to the type of the vector assigned into, so a placeholder built
+  # with the default (UTC) start would silently re-tag the merged start times.
   if (!drop) {
-    out <- vec_rep(imu(sensor = class(x)[1], bursts = list(NULL), frequency = units::set_units(NA, "Hz")), n)
+    out <- vec_rep(
+      imu(
+        sensor = class(x)[1],
+        bursts = list(NULL),
+        frequency = units::set_units(NA, "Hz"),
+        start = as.POSIXct(NA, tz = attr(burst_starts, "tzone") %||% "")
+      ),
+      n
+    )
     out[valid[merged_i]] <- merged
     merged <- out
   }
@@ -260,7 +272,7 @@ merge_imu <- function(x,
 #' a <- acc(
 #'   list(cbind(X = 1:60, Y = 1:60), cbind(X = 101:140)),
 #'   frequency = c(units::set_units(20, "Hz"), units::set_units(40, "Hz")),
-#'   start = as.POSIXct(c(0, 10), tz = "UTC")
+#'   start = as.POSIXct(c(0, 10), origin = "1970-01-01", tz = "UTC")
 #' )
 #'
 #' x <- split_imu(a, units::set_units(1, "s"))
