@@ -46,6 +46,25 @@ as_imu.data.frame <- function(x,
                               merge_continuous = TRUE,
                               drop = FALSE,
                               ...) {
+  # Check lengths and NA track IDs for consistency with move2 inputs
+  if (length(timestamp) != nrow(x)) {
+    cli::cli_abort(
+      "{.arg timestamp} must be the same length as {.arg x} ({nrow(x)}), not {length(timestamp)}."
+    )
+  }
+
+  if (!is.null(track_id)) {
+    if (length(track_id) != nrow(x)) {
+      cli::cli_abort(
+        "{.arg track_id} must be the same length as {.arg x} ({nrow(x)}), not {length(track_id)}."
+      )
+    }
+
+    if (anyNA(track_id)) {
+      cli::cli_abort("{.arg track_id} must not contain missing values.")
+    }
+  }
+
   as_imu_table(
     x,
     sensor = sensor,
@@ -73,7 +92,7 @@ as_imu_table <- function(x,
                          gap_tol = 1e-6,
                          merge_continuous = TRUE,
                          drop = FALSE) {
-  timestamp <- check_imu_time_args(x, timestamp, track_id)
+  timestamp <- timestamp_to_POSIXct(timestamp, arg = "timestamp")
 
   if (nrow(x) == 0) {
     return(new_imu(sensor))
@@ -520,56 +539,6 @@ new_freq_regime <- function(n, n_next = 0, prev_run = FALSE) {
   }
 
   c(start, rep(FALSE, n - 1))
-}
-
-# Validate timestamp and track_id args for tabular input. `move2` objects
-# should already be valid, but data.frame inputs with user-specified timestamp
-# and track_id columns haven't necessarily had their inputs validated yet.
-# Returns `timestamp` in `POSIXct` format, converted from other inputs that
-# may exist in move2 or in a data.frame (e.g. `Date`).
-check_imu_time_args <- function(x,
-                                timestamp,
-                                track_id,
-                                call = rlang::caller_env()) {
-  # `units` vectors are numeric, so `timestamp_to_POSIXct()` rejects them, but
-  # only generically. Say why here: the trap is that a unit would otherwise be
-  # silently ignored and the value read as seconds since the epoch.
-  if (inherits(timestamp, "units")) {
-    cli::cli_abort(
-      c(
-        "{.arg timestamp} must not carry {.cls units}.",
-        "i" = "Numeric timestamps are read as seconds since 1970-01-01 UTC."
-      ),
-      call = call
-    )
-  }
-
-  timestamp <- timestamp_to_POSIXct(timestamp, arg = "timestamp", call = call)
-
-  if (length(timestamp) != nrow(x)) {
-    cli::cli_abort(
-      "{.arg timestamp} must be the same length as {.arg x} ({nrow(x)}), not {length(timestamp)}.",
-      call = call
-    )
-  }
-
-  if (!rlang::is_null(track_id)) {
-    if (length(track_id) != nrow(x)) {
-      cli::cli_abort(
-        "{.arg track_id} must be the same length as {.arg x} ({nrow(x)}), not {length(track_id)}.",
-        call = call
-      )
-    }
-
-    if (anyNA(track_id)) {
-      cli::cli_abort(
-        "{.arg track_id} must not contain missing values.",
-        call = call
-      )
-    }
-  }
-
-  timestamp
 }
 
 # Implementation of `move2::mt_is_track_id_cleaved()` that dispatches on an

@@ -68,8 +68,7 @@ timestamp_to_POSIXct <- function(x,
     cli::cli_abort(
       c(
         "{.arg {arg}} must be a timestamp, not {.cls {class(x)[1]}}.",
-        "i" = "Supply a {.cls POSIXct}, {.cls POSIXlt}, {.cls Date}, or a
-               number of seconds since 1970-01-01 UTC."
+        "i" = "Supply a {.cls POSIXct}, {.cls POSIXlt}, {.cls Date}, or a bare numeric value."
       ),
       call = call
     )
