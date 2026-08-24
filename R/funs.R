@@ -305,7 +305,7 @@ starts <- function(x) {
 #' @rdname imu-fields
 #' @export
 `starts<-` <- function(x, value) {
-  field(x, "start") <- timestamp_to_POSIXct(value, arg = "value")
+  field(x, "start") <- timestamp_to_POSIXct(value)
   x
 }
 
