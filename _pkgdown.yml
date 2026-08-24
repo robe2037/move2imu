@@ -22,6 +22,8 @@ reference:
   - as_acc
   - as_gyro
   - as_mag
+  - mt_imu_column
+  - mt_imu
   - imu_colset
   - active_colsets
   - movebank_colsets
