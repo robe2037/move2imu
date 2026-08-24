@@ -4,12 +4,15 @@
 \alias{plot_imu_trace}
 \title{Plot IMU traces over time}
 \usage{
-plot_imu_trace(x, ylab = "Value")
+plot_imu_trace(x, ...)
 }
 \arguments{
 \item{x}{An IMU vector (\code{acc}, \code{mag}, or \code{gyro})}
 
-\item{ylab}{A character with the y axis label}
+\item{...}{Passed to \code{\link[dygraphs:dygraph]{dygraphs::dygraph()}} (for instance, to label axes).}
+}
+\value{
+A \code{\link[dygraphs:dygraph]{dygraphs::dygraph()}} with one series per IMU axis.
 }
 \description{
 Plot the trace of IMU values from an IMU vector with time on the x-axis.
@@ -31,6 +34,14 @@ plot_imu_trace(a)
 
 # To avoid this issue, plot only a single deployment's values:
 plot_imu_trace(a[move2::mt_track_id(alb) == "4261-2228"])
+
+# Label axes by passing arguments to `dygraph()`:
+plot_imu_trace(acc_example(), main = "Wing beats", ylab = "Acceleration (g)")
+
+# Use other `dygraphs` layers to further modify the plot. For instance,
+# to label the time axis in UTC instead of the browser time zone:
+plot_imu_trace(acc_example()) |>
+  dygraphs::dyOptions(labelsUTC = TRUE)
 \dontshow{\}) # examplesIf}
 }
 \seealso{
