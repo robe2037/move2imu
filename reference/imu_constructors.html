@@ -100,9 +100,13 @@ be in Hz.</p></dd>
 
 
 <dt id="arg-start">start<a class="anchor" aria-label="anchor" href="#arg-start"></a></dt>
-<dd><p>Optional; burst start times in POSIXct format. Either length 1
-(recycled), the same length as <code>bursts</code>, or <code>NULL</code> if start
-times are unknown.</p></dd>
+<dd><p>Optional; burst start times. Either length 1 (recycled), the
+same length as <code>bursts</code>, or <code>NULL</code> if start times are unknown.</p>
+<p>Accepts <code>POSIXct</code>, <code>POSIXlt</code>, <code>Date</code>, or numeric values. <code>Date</code> objects
+are treated as being recorded at midnight, UTC. Numeric values are
+interpreted as the number of seconds since <code>1970-01-01 00:00:00 UTC</code>.
+Inputs are all converted to <code>POSIXct</code>. For inputs with a specified time
+zone, it is retained.</p></dd>
 
 </dl></div>
     <div class="section level2">

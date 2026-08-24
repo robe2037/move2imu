@@ -64,7 +64,7 @@ ts <- c(
   60
 )
 
-gul$timestamp <- as.POSIXct(ts, tz = "UTC")
+gul$timestamp <- as.POSIXct(ts, origin = "1970-01-01", tz = "UTC")
 ```
 
 To be able to identify burst start and endpoints,
@@ -363,7 +363,7 @@ alb <- alb[!is.na(alb$eobs_accelerations_raw), ]
 jitter <- rep(c(0, .02, .01, .03, .02), 9)
 ts <- rep(c(0, 12, 24, 636, 648), 9)
 
-alb$timestamp <- as.POSIXct(ts + jitter, tz = "UTC")
+alb$timestamp <- as.POSIXct(ts + jitter, origin = "1970-01-01", tz = "UTC")
 ```
 
 As before, we’ll make sure our data are sorted and deduplicated before

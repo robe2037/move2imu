@@ -99,7 +99,7 @@ into `gap_tol`.
 a <- acc(
   list(cbind(X = 1:60, Y = 1:60), cbind(X = 61:100, Y = 61:100), cbind(X = 101:140)),
   frequency = units::set_units(20, "Hz"),
-  start = as.POSIXct(c(0, 3, 5), tz = "UTC")
+  start = as.POSIXct(c(0, 3, 5), origin = "1970-01-01", tz = "UTC")
 )
 
 merge_imu(a)

@@ -495,6 +495,18 @@ here, the wing beats are clearly visible on the Z axis:
 plot_imu_trace(a[422])
 ```
 
+The plot is returned unstyled. Additional arguments are passed to
+[`dygraphs::dygraph()`](https://rdrr.io/pkg/dygraphs/man/dygraph.html)
+and additional `dygraphs` layers can be added to the output plot. For
+instance, to add axis labels and ensure times are labeled in UTC instead
+of the browser’s local time zone:
+
+``` r
+
+plot_imu_trace(a[422], main = "Wing beats", ylab = "Acceleration (g)") |>
+  dygraphs::dyOptions(labelsUTC = TRUE)
+```
+
 ## Next steps
 
 If your data are stored as raw ADC values rather than physical units,

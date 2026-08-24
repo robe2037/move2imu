@@ -61,7 +61,9 @@ used by <code><a href="plot_sampling_effort.html">plot_sampling_effort()</a></co
 
 <dl><dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Any number of <code>imu</code> or timestamp vectors. All vectors must be the
-same length.</p></dd>
+same length. Timestamps can be in <code>POSIXct</code>, <code>POSIXlt</code>, <code>Date</code>, or a
+number of seconds since <code>1970-01-01 00:00:00 UTC</code>. <code>Date</code> objects are
+treated as being recorded at midnight, UTC.</p></dd>
 
 
 <dt id="arg-ids">ids<a class="anchor" aria-label="anchor" href="#arg-ids"></a></dt>
@@ -81,8 +83,8 @@ legibility for sparsely collected data.</p></dd>
 
 <dt id="arg-from-to">from, to<a class="anchor" aria-label="anchor" href="#arg-from-to"></a></dt>
 <dd><p>Start and end timestamps defining the range within which
-samples will be counted. By default, the full temporal extent of the data
-is used.</p></dd>
+samples will be counted. Accepts the same formats as timestamps in <code>...</code>.
+By default, the full temporal extent of the data is used.</p></dd>
 
 </dl></div>
     <div class="section level2">

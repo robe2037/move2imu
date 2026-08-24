@@ -17,7 +17,9 @@ bin_samples(..., ids = NULL, bin_width = NULL, from = NULL, to = NULL)
 - ...:
 
   Any number of `imu` or timestamp vectors. All vectors must be the same
-  length.
+  length. Timestamps can be in `POSIXct`, `POSIXlt`, `Date`, or a number
+  of seconds since `1970-01-01 00:00:00 UTC`. `Date` objects are treated
+  as being recorded at midnight, UTC.
 
 - ids:
 
@@ -39,7 +41,8 @@ bin_samples(..., ids = NULL, bin_width = NULL, from = NULL, to = NULL)
 - from, to:
 
   Start and end timestamps defining the range within which samples will
-  be counted. By default, the full temporal extent of the data is used.
+  be counted. Accepts the same formats as timestamps in `...`. By
+  default, the full temporal extent of the data is used.
 
 ## Value
 

@@ -40,6 +40,11 @@ Frequencies assigned with `freqs<-` are converted to Hz if they are
 provided with compatible units attached. If no units are provided, the
 values are assumed to be in Hz already.
 
+Start times assigned with `starts<-` accept `POSIXct`, `POSIXlt`,
+`Date`, or a number of seconds since `1970-01-01 00:00:00 UTC`. Start
+times are converted and stored as `POSIXct`. `Date` objects are treated
+as being recorded at midnight, UTC.
+
 ## Examples
 
 ``` r
