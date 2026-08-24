@@ -95,9 +95,13 @@ output will match the number of rows in the input data \code{x} and
 bursts will be stored at the index location corresponding to the start time
 of the burst.}
 
-\item{timestamp}{When \code{x} is a \code{data.frame}, a vector of \code{POSIXct} or
-numeric timestamps corresponding to the recording time of each row of \code{x}.
-Numeric values are interpreted as seconds since \verb{1970-01-01 00:00:00 UTC}.}
+\item{timestamp}{When \code{x} is a \code{data.frame}, a vector of timestamps
+corresponding to the recording time of each row of \code{x}.
+
+Accepts \code{POSIXct}, \code{POSIXlt}, \code{Date}, or numeric values. \code{Date} objects
+are treated as being recorded at midnight, UTC. Numeric values are
+interpreted as the number of seconds since \verb{1970-01-01 00:00:00 UTC}.
+Inputs are all converted to \code{POSIXct}.}
 
 \item{track_id}{When \code{x} is a \code{data.frame}, a vector of IDs identifying the
 track (or other grouping variable) for each row in \code{x}. Bursts are never

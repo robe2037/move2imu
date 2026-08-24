@@ -10,9 +10,13 @@
 #' @param x A `move2` or `data.frame` containing acceleration data. A `move2`
 #'   will typically be loaded from disk with [move2::mt_read()] or downloaded
 #'   using [move2::movebank_download_study()].
-#' @param timestamp When `x` is a `data.frame`, a vector of `POSIXct` or
-#'   numeric timestamps corresponding to the recording time of each row of `x`.
-#'   Numeric values are interpreted as seconds since `1970-01-01 00:00:00 UTC`.
+#' @param timestamp When `x` is a `data.frame`, a vector of timestamps
+#'   corresponding to the recording time of each row of `x`.
+#'
+#'   Accepts `POSIXct`, `POSIXlt`, `Date`, or numeric values. `Date` objects
+#'   are treated as being recorded at midnight, UTC. Numeric values are
+#'   interpreted as the number of seconds since `1970-01-01 00:00:00 UTC`.
+#'   Inputs are all converted to `POSIXct`.
 #' @param track_id When `x` is a `data.frame`, a vector of IDs identifying the
 #'   track (or other grouping variable) for each row in `x`. Bursts are never
 #'   built across tracks, and adjacent bursts are only merged within a track.
