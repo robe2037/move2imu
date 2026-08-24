@@ -34,6 +34,12 @@
 #' # to label the time axis in UTC instead of the browser time zone:
 #' plot_imu_trace(acc_example()) |>
 #'   dygraphs::dyOptions(labelsUTC = TRUE)
+#'
+#' # The data used to build the plot keep a time zone record. You can plot
+#' # the trace in the data time zone as follows. (Note that this may produce a
+#' # blank plot for some dygraphs distributions.)
+#' plot_imu_trace(acc_example()) |>
+#'   dygraphs::dyOptions(useDataTimezone = TRUE)
 plot_imu_trace <- function(x, ...) {
   rlang::check_installed(c("dygraphs", "dplyr"))
 
