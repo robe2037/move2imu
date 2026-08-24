@@ -36,6 +36,8 @@
 #' with one another, but a track that sampled less intensively than its peers
 #' appears uniformly faint.
 #'
+#' The time axis is drawn in the time zone of the first vector passed to `...`.
+#'
 #' You can directly access the data produced by this calculation and passed to
 #' the plot by calling [bin_samples()].
 #'
@@ -249,7 +251,9 @@ plot_sampling_effort <- function(...,
 #'    across all values of `ids`.
 #'
 #' @param ... Any number of `imu` or timestamp vectors. All vectors must be the
-#'   same length.
+#'   same length. Timestamps can be in `POSIXct`, `POSIXlt`, `Date`, or a
+#'   number of seconds since `1970-01-01 00:00:00 UTC`. `Date` objects are
+#'   treated as being recorded at midnight, UTC.
 #' @param ids Vector of IDs used to group the observations in `...`. All
 #'   observations for each group will be included in a single panel. Must be
 #'   the same length as each of the vectors in `...`.
@@ -261,8 +265,8 @@ plot_sampling_effort <- function(...,
 #'   Decrease the `bin_width` to increase plot resolution, at the expense of
 #'   legibility for sparsely collected data.
 #' @param from,to Start and end timestamps defining the range within which
-#'   samples will be counted. By default, the full temporal extent of the data
-#'   is used.
+#'   samples will be counted. Accepts the same formats as timestamps in `...`.
+#'   By default, the full temporal extent of the data is used.
 #'
 #' @return A data frame with one row per non-empty lane, id, and bin, containing
 #'   the following columns:
@@ -330,12 +334,12 @@ bin_samples_ <- function(...,
 
   bad_type <- !purrr::map_lgl(
     lanes,
-    function(l) inherits(l, c("imu", "POSIXt", "Date"))
+    function(l) inherits(l, "imu") || is_timestamp(l)
   )
 
   if (any(bad_type)) {
     cli::cli_abort(c(
-      "Every input to {.arg ...} must be an {.cls imu} or datetime vector.",
+      "Every input to {.arg ...} must be an {.cls imu} or timestamp vector.",
       x = "Problems with {.arg {names(lanes)[bad_type]}}."
     ))
   }
@@ -668,8 +672,8 @@ burst_timing <- function(x) {
 
     keep <- has_data & !no_timing
     tz <- attr(starts(x), "tzone") %||% ""
-  } else if (inherits(x, "POSIXt") || inherits(x, "Date")) {
-    x <- as.POSIXct(x)
+  } else if (is_timestamp(x)) {
+    x <- timestamp_to_POSIXct(x)
     start <- as.numeric(x)
     n_samp <- rep(1L, length(start))
     samp_period <- rep(1, length(start))
@@ -738,12 +742,15 @@ timestamp_to_sec <- function(x,
     return(NULL)
   }
 
-  if (!inherits(x, "POSIXt") && !inherits(x, "Date")) {
-    cli::cli_abort(
-      "{.arg {arg}} must be a datetime or {.cls Date}, not {.cls {class(x)[1]}}.",
-      call = call
-    )
-  }
+  # `x` is normalized below, so the lazy default for `arg` has to be resolved
+  # while it still refers to what the caller passed
+  force(arg)
+
+  # Convert first: it rejects non-timestamps, and the checks below need a plain
+  # double. `is.finite()` only gained a `POSIXlt` method in R 4.3 and errors on
+  # the underlying list before that, so a `strptime()` result would otherwise
+  # fail here rather than being validated.
+  x <- timestamp_to_POSIXct(x, arg = arg, call = call)
 
   if (length(x) != 1L) {
     cli::cli_abort("{.arg {arg}} must be length 1.", call = call)
@@ -754,7 +761,7 @@ timestamp_to_sec <- function(x,
     cli::cli_abort("{.arg {arg}} must be a finite datetime.", call = call)
   }
 
-  as.numeric(as.POSIXct(x))
+  as.numeric(x)
 }
 
 # Format a bin width for the plot caption.

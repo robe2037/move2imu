@@ -37,9 +37,14 @@ either length 1 (recycled to all bursts) or the same length as
 to Hz internally. If no units are specified, the frequency is assumed to
 be in Hz.}
 
-\item{start}{Optional; burst start times in POSIXct format. Either length 1
-(recycled), the same length as \code{bursts}, or \code{NULL} if start
-times are unknown.}
+\item{start}{Optional; burst start times. Either length 1 (recycled), the
+same length as \code{bursts}, or \code{NULL} if start times are unknown.
+
+Accepts \code{POSIXct}, \code{POSIXlt}, \code{Date}, or numeric values. \code{Date} objects
+are treated as being recorded at midnight, UTC. Numeric values are
+interpreted as the number of seconds since \verb{1970-01-01 00:00:00 UTC}.
+Inputs are all converted to \code{POSIXct}. For inputs with a specified time
+zone, it is retained.}
 }
 \value{
 An IMU vector of the corresponding sensor type (\code{acc},

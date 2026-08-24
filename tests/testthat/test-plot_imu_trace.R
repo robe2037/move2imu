@@ -7,7 +7,7 @@ test_that("plot_imu_trace", {
 
 test_that("plot_imu_trace handles missing start times", {
   a <- acc_example()
-  starts(a) <- as.POSIXct(c(1, NA), tz = "UTC")
+  starts(a) <- .as.POSIXct(c(1, NA))
 
   expect_warning(
     g <- plot_imu_trace(a),
@@ -16,7 +16,7 @@ test_that("plot_imu_trace handles missing start times", {
   expect_s3_class(g, "dygraphs")
 
   # All starts NA: errors.
-  starts(a) <- as.POSIXct(c(NA, NA), tz = "UTC")
+  starts(a) <- .as.POSIXct(c(NA, NA))
   expect_error(plot_imu_trace(a), "start timestamps and sampling frequencies")
 })
 
@@ -46,6 +46,12 @@ test_that("plot_imu_trace uses seconds regardless of frequency unit", {
 
   g_hz <- plot_imu_trace(a_hz)
   g_min <- plot_imu_trace(a_min)
+
+  # At 20Hz, 21st sample starts a 1 second. Confirm offsets were added correctly
+  expect_identical(
+    g_hz$x$data[[1]][c(1, 21)],
+    c("2026-01-01T00:00:00.000Z", "2026-01-01T00:00:01.000Z")
+  )
 
   # The dygraph time series should be identical — i.e. the dt offsets
   # were correctly normalized to seconds before adding to the start time.

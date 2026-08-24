@@ -294,8 +294,10 @@ test_that("Preserve time zone", {
   a$timestamp <- 1:nrow(a)
   expect_equal(attr(starts(as_acc(a)), "tzone"), "UTC")
 
-  a$timestamp <- as.POSIXct(a$timestamp, tz = "CET")
-  g$timestamp <- as.POSIXct(g$timestamp, tz = "CET")
+  a$timestamp <- .as.POSIXct(a$timestamp, "CET")
+  # Set the attribute directly: `as.POSIXct(<POSIXct>, tz = )` ignores `tz`
+  # before R 4.3, so this line was a silent no-op there.
+  attr(g$timestamp, "tzone") <- "CET"
   expect_equal(attr(starts(as_acc(a)), "tzone"), "CET")
   expect_equal(attr(starts(as_acc(g)), "tzone"), "CET")
 })
@@ -306,7 +308,7 @@ test_that("Equivalent data in burst and expanded format produce same acc", {
     acceleration_x = as.numeric(1:10),
     acceleration_y = as.numeric(1:10),
     acceleration_z = as.numeric(1:10),
-    timestamp = as.POSIXct(seq(1, 1.9, by = 0.1), "UTC"),
+    timestamp = .as.POSIXct(seq(1, 1.9, by = 0.1)),
     x = 1,
     y = 1
   )
@@ -319,7 +321,7 @@ test_that("Equivalent data in burst and expanded format produce same acc", {
       paste0(rep(1:5, each = 3), collapse = " "),
       paste0(rep(6:10, each = 3), collapse = " ")
     ),
-    timestamp = as.POSIXct(c(1, 1.5), "UTC"),
+    timestamp = .as.POSIXct(c(1, 1.5)),
     x = 1,
     y = 1
   )
@@ -535,27 +537,11 @@ test_that("Only IMU records are considered when checking data ordering", {
 })
 
 test_that("compact bursts must also be ordered and unique within a track", {
-  compact_acc <- function(starts) {
-    t <- data.frame(
-      id = 1,
-      eobs_acceleration_axes = "XYZ",
-      eobs_acceleration_sampling_frequency_per_axis = 20,
-      eobs_accelerations_raw = vapply(
-        seq_along(starts), function(i) paste(1:30, collapse = " "), character(1)
-      ),
-      timestamp = as.POSIXct(starts, tz = "UTC"),
-      x = 1, y = 1
-    )
-    move2::mt_as_move2(
-      t, coords = c("x", "y"), time_column = "timestamp", track_id_column = "id"
-    )
-  }
+  expect_error(as_acc(compact_acc(.as.POSIXct(c(2, 0)))), "strictly increasing")
+  expect_error(as_acc(compact_acc(.as.POSIXct(c(0, 0)))), "strictly increasing")
+  expect_no_error(as_acc(compact_acc(.as.POSIXct(c(0, 2)))))
 
-  expect_error(as_acc(compact_acc(c(2, 0))), "strictly increasing")
-  expect_error(as_acc(compact_acc(c(0, 0))), "strictly increasing")
-  expect_no_error(as_acc(compact_acc(c(0, 2))))
-
-  comp <- compact_acc(c(0, 0))
+  comp <- compact_acc(.as.POSIXct(c(0, 0)))
   move2::mt_track_id(comp) <- c(1, 2)
 
   expect_no_error(as_acc(comp))
@@ -599,7 +585,7 @@ test_that("as_acc() rejects unused arguments for either burst format", {
     acceleration_x = as.numeric(1:4),
     acceleration_y = as.numeric(1:4),
     acceleration_z = as.numeric(1:4),
-    ts = as.POSIXct(1:4, tz = "UTC")
+    ts = .as.POSIXct(1:4)
   )
 
   expect_error(as_acc(albatrosses(), typo = 1), "unused argument")
@@ -668,5 +654,23 @@ test_that("as_acc() dispatches on data.frame subclasses", {
       timestamp = alb_sf[[move2::mt_time_column(alb)]],
       track_id = alb_sf[[move2::mt_track_id_column(alb)]]
     )
+  )
+})
+
+test_that("Time columns that are not POSIXct are normalized", {
+  # move2 permits a `numeric`, `Date`, or `POSIXt` time column
+  d <- as_acc(compact_acc(as.Date(c("2020-01-01", "2020-01-02"))))
+  expect_identical(starts(d), as.POSIXct(c("2020-01-01", "2020-01-02"), tz = "UTC"))
+
+  n <- as_acc(compact_acc(c(0, 10)))
+  expect_identical(starts(n), .as.POSIXct(c(0, 10)))
+
+  # Burst frequencies are derived from the timestamps for expanded data, so a
+  # `Date` column must be seconds there too
+  e <- expanded_acc(seq(0, 0.9, by = 0.1))
+  e$timestamp <- as.Date("2020-01-01") + seq_len(nrow(e)) - 1
+  expect_identical(
+    starts(as_acc(e, drop = TRUE)),
+    as.POSIXct("2020-01-01", tz = "UTC")
   )
 })

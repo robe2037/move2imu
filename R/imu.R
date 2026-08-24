@@ -18,15 +18,9 @@ imu <- function(sensor,
   # unit
   frequency <- as_hz(frequency)
 
-  start <- start %||% NA_real_
-
-  if (inherits(start, "POSIXt")) {
-    tz <- attr(start, "tzone")
-  } else {
-    tz <- "UTC"
-  }
-
-  start <- as.POSIXct(as.double(start), tz = tz)
+  # `NULL` means the start times are unknown; every other input is a timestamp
+  start <- timestamp_to_POSIXct(start %||% NA, arg = "start")
+  tz <- attr(start, "tzone") %||% ""
 
   frequency <- vec_recycle(frequency, n)
   start <- vec_recycle(start, n)
@@ -51,7 +45,7 @@ imu <- function(sensor,
 new_imu <- function(sensor,
                     bursts = new_burst_list(list(), sensor),
                     frequency = units::set_units(double(), "Hz"),
-                    start = as.POSIXct(double(), tz = "UTC")) {
+                    start = as.POSIXct(double(), origin = "1970-01-01", tz = "UTC")) {
   new_rcrd(
     list(bursts = bursts, frequency = frequency, start = start),
     class = c(sensor, "imu")

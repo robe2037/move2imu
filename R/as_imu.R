@@ -258,7 +258,7 @@ as_imu_expanded <- function(x,
       sensor,
       bursts = list(NULL),
       frequency = units::set_units(NA, "Hz"),
-      start = as.POSIXct(NA, tz = attr(timestamp, "tzone") %||% "UTC")
+      start = as.POSIXct(NA, tz = attr(timestamp, "tzone") %||% "")
     ),
     nrow(x)
   )
@@ -531,8 +531,9 @@ check_imu_time_args <- function(x,
                                 timestamp,
                                 track_id,
                                 call = rlang::caller_env()) {
-  # `units` vectors are numeric, so without this they pass the check below and
-  # are read as seconds since the epoch, silently ignoring the unit they carry.
+  # `units` vectors are numeric, so `timestamp_to_POSIXct()` rejects them, but
+  # only generically. Say why here: the trap is that a unit would otherwise be
+  # silently ignored and the value read as seconds since the epoch.
   if (inherits(timestamp, "units")) {
     cli::cli_abort(
       c(
@@ -543,17 +544,7 @@ check_imu_time_args <- function(x,
     )
   }
 
-  if (inherits(timestamp, "POSIXlt") || inherits(timestamp, "Date")) {
-    timestamp <- as.POSIXct(timestamp)
-  } else if (is.numeric(timestamp)) {
-    timestamp <- as.POSIXct(timestamp, origin = "1970-01-01", tz = "UTC")
-  } else if (!inherits(timestamp, "POSIXct")) {
-    cli::cli_abort(
-      "{.arg timestamp} must be a {.cls POSIXct}, {.cls Date}, or numeric vector,
-       not {.cls {class(timestamp)[1]}}.",
-      call = call
-    )
-  }
+  timestamp <- timestamp_to_POSIXct(timestamp, arg = "timestamp", call = call)
 
   if (length(timestamp) != nrow(x)) {
     cli::cli_abort(

@@ -30,7 +30,7 @@ be derived. In these cases, the burst is returned unchanged.
 a <- acc(
   list(cbind(X = 1:60, Y = 1:60), cbind(X = 101:140)),
   frequency = c(units::set_units(20, "Hz"), units::set_units(40, "Hz")),
-  start = as.POSIXct(c(0, 10), tz = "UTC")
+  start = as.POSIXct(c(0, 10), origin = "1970-01-01", tz = "UTC")
 )
 
 x <- split_imu(a, units::set_units(1, "s"))

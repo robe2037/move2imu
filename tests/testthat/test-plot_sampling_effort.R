@@ -23,7 +23,7 @@ test_that("plot structure is based on the data returned by bin_samples", {
   skip_if_not_installed("ggplot2")
 
   a <- acc_example()
-  ts <- as.POSIXct(c(0, 5), tz = "UTC")
+  ts <- .as.POSIXct(c(0, 5))
 
   p <- plot_sampling_effort(acc = a, gps = ts, bin_width = 1)
 
@@ -42,7 +42,7 @@ test_that("lanes stack in argument order and are colored in the same order", {
   skip_if_not_installed("ggplot2")
 
   a <- acc_example()
-  ts <- as.POSIXct(c(0, 5), tz = "UTC")
+  ts <- .as.POSIXct(c(0, 5))
 
   p <- plot_sampling_effort(acc = a, gps = ts, bin_width = 1)
 
@@ -68,10 +68,10 @@ test_that("a lane with no data keeps its place on the axis", {
   a <- acc(
     list(matrix(1:100, ncol = 1, dimnames = list(NULL, "X"))),
     units::set_units(1, "Hz"),
-    start = as.POSIXct(0, "UTC")
+    start = .as.POSIXct(0)
   )[c(1L, NA, NA, NA)]
 
-  g <- as.POSIXct(c(NA, 200, 250, 300), "UTC")
+  g <- .as.POSIXct(c(NA, 200, 250, 300))
 
   # Helper to get the y limits used in the plot
   lanes <- function(p) as.character(ggplot2::layer_scales(p)$y$get_limits())
@@ -79,7 +79,7 @@ test_that("a lane with no data keeps its place on the axis", {
   # Discrete scales drop unused levels by default, but we want to keep
   # all requested lanes, whether they are empty because of a time range
   # restriction (`from`/`to`) or because they don't contain data.
-  p <- plot_sampling_effort(acc = a, gps = g, bin_width = 10, to = as.POSIXct(100, "UTC"))
+  p <- plot_sampling_effort(acc = a, gps = g, bin_width = 10, to = .as.POSIXct(100))
   expect_setequal(lanes(p), c("acc", "gps"))
 
   p <- plot_sampling_effort(acc = a, gps = g[rep(NA_integer_, 4)], bin_width = 10)
@@ -112,10 +112,10 @@ test_that("the plotted axis spans the window that was asked for", {
   a <- acc(
     list(matrix(1:100, ncol = 1, dimnames = list(NULL, "X"))),
     units::set_units(1, "Hz"),
-    start = as.POSIXct(0, tz = "UTC")
+    start = .as.POSIXct(0)
   )
 
-  at <- function(s) as.POSIXct(s, tz = "UTC")
+  at <- function(s) .as.POSIXct(s)
   hi <- function(p) max(as.numeric(ggplot2::layer_scales(p)$x$get_limits()))
   lo <- function(p) min(as.numeric(ggplot2::layer_scales(p)$x$get_limits()))
 
@@ -147,7 +147,7 @@ test_that("correct default theme elements", {
 
   p <- plot_sampling_effort(
     acc = acc_example(),
-    gps = as.POSIXct(c(0, 5), tz = "UTC"),
+    gps = .as.POSIXct(c(0, 5)),
     ids = c("x", "y")
   )
 
@@ -166,7 +166,7 @@ test_that("plot renders", {
 
   p <- plot_sampling_effort(
     acc = acc_example(),
-    gps = as.POSIXct(c(0, 5), tz = "UTC"),
+    gps = .as.POSIXct(c(0, 5)),
     ids = c("x", "y")
   )
 
@@ -234,11 +234,11 @@ test_that("Binned samples share one bin grid across lanes", {
   a <- acc(
     list(cbind(X = 1:10)),
     units::set_units(1, "Hz"),
-    start = as.POSIXct(3050, tz = "UTC")
+    start = .as.POSIXct(3050)
   )
 
   # grid_origin = floor(3055 / 100) * 100 = 3000
-  ts <- as.POSIXct(3055, tz = "UTC")
+  ts <- .as.POSIXct(3055)
 
   b <- bin_samples(a, ts, bin_width = 100)
 
@@ -250,7 +250,7 @@ test_that("Default bin width divides the plot time span into 300 bins", {
     acc(
       rep(list(cbind(X = 1:2)), length(t)),
       units::set_units(1, "Hz"),
-      start = as.POSIXct(t, tz = "UTC")
+      start = .as.POSIXct(t)
     )
   }
 
@@ -266,7 +266,7 @@ test_that("Default bin width divides the plot time span into 300 bins", {
 
   # A lone instant has no span to divide, so the width is arbitrary: whatever
   # it is, it spans the whole plot. We use one second by default.
-  expect_equal(attr(bin_samples(as.POSIXct(0, tz = "UTC")), "bin_width"), 1)
+  expect_equal(attr(bin_samples(.as.POSIXct(0)), "bin_width"), 1)
 })
 
 test_that("Only drop NA panels when both ID and data are NA", {
@@ -300,7 +300,7 @@ test_that("bin_samples keeps an all-NA lane as a level with no rows", {
   # We want to show empty lanes so users can easily see that no data were
   # collected
   a <- acc_example()
-  empty <- as.POSIXct(c(NA, NA), tz = "UTC")
+  empty <- .as.POSIXct(c(NA, NA))
 
   b <- bin_samples(a, empty, bin_width = 1)
 
@@ -310,7 +310,7 @@ test_that("bin_samples keeps an all-NA lane as a level with no rows", {
 
 test_that("bin_samples normalizes effort within each lane", {
   a <- acc_example()
-  ts <- as.POSIXct(c(0, 5), tz = "UTC")
+  ts <- .as.POSIXct(c(0, 5))
 
   b <- bin_samples(acc = a, gps = ts, bin_width = 1)
 
@@ -322,13 +322,13 @@ test_that("bin_samples normalizes effort within each lane", {
 test_that("Carry through time zone correctly", {
   # Need to ensure time zone is respected else the grid may become unexpectedly
   # misaligned
-  local <- as.POSIXct(c(0, 3600), tz = "")
+  local <- .as.POSIXct(c(0, 3600), "")
   expect_identical(attr(bin_samples(local, bin_width = 60)$time, "tzone"), "")
 
-  utc <- as.POSIXct(c(0, 3600), tz = "UTC")
+  utc <- .as.POSIXct(c(0, 3600))
   expect_identical(attr(bin_samples(utc, bin_width = 60)$time, "tzone"), "UTC")
 
-  ny <- as.POSIXct(c(0, 3600), tz = "America/New_York")
+  ny <- .as.POSIXct(c(0, 3600), "America/New_York")
   expect_identical(attr(bin_samples(ny, bin_width = 60)$time, "tzone"), "America/New_York")
 })
 
@@ -352,12 +352,15 @@ test_that("disjoint sensors bin correctly from one aligned set of vectors", {
 
 test_that("bin_samples validates lanes, types and lengths", {
   a <- acc_example()
-  ts <- as.POSIXct(c(0, 10, 20), tz = "UTC")
+  ts <- .as.POSIXct(c(0, 10, 20))
 
   expect_error(bin_samples(ids = 1), "No data provided")
-  expect_error(bin_samples(1:10), "must be an <imu> or datetime vector")
-  expect_error(bin_samples(a, bad = 1:2), "Problems with `bad`")
-  expect_error(bin_samples(x = 1:2, y = 1:2), "Problems with `x` and `y`")
+  expect_error(bin_samples(letters[1:3]), "must be an <imu> or timestamp vector")
+  expect_error(bin_samples(a, bad = letters[1:2]), "Problems with `bad`")
+  expect_error(
+    bin_samples(x = letters[1:2], y = letters[1:2]),
+    "Problems with `x` and `y`"
+  )
 
   # Length match within `...`
   expect_error(bin_samples(a, ts), "Got lengths 2 and 3")
@@ -385,7 +388,7 @@ test_that("Warn and drop on improper frequency inputs", {
   a <- acc(
     list(cbind(X = 1:10, Y = 1:10, Z = 1), cbind(X = 1:10, Y = 1:10, Z = 1)),
     frequency = units::set_units(c(0, 20), "Hz"),
-    start = as.POSIXct(c(0, 100), tz = "UTC")
+    start = .as.POSIXct(c(0, 100))
   )
 
   expect_warning(b <- bin_samples(a), "Omitting 1 burst")
@@ -396,7 +399,7 @@ test_that("error if bin_width is too fine for the input data", {
   a <- acc(
     list(matrix(0, 300, 1, dimnames = list(NULL, "X"))),
     frequency = units::set_units(1, "Hz"),
-    start = as.POSIXct(0, tz = "UTC")
+    start = .as.POSIXct(0)
   )
 
   expect_error(
@@ -411,22 +414,22 @@ test_that("from and to args clip samples within a burst", {
   a <- acc(
     list(matrix(1:10, ncol = 1, dimnames = list(NULL, "X"))),
     units::set_units(1, "Hz"),
-    start = as.POSIXct(0, tz = "UTC")
+    start = .as.POSIXct(0)
   )
 
   b <- bin_samples(
     a,
     bin_width = 100,
-    from = as.POSIXct(3, "UTC"),
-    to = as.POSIXct(7, "UTC")
+    from = .as.POSIXct(3),
+    to = .as.POSIXct(7)
   )
 
   expect_equal(sum(b$n), 4L)
 
-  b <- bin_samples(a, bin_width = 100, from = as.POSIXct(6, "UTC"))
+  b <- bin_samples(a, bin_width = 100, from = .as.POSIXct(6))
   expect_equal(sum(b$n), 4L)
 
-  b <- bin_samples(a, bin_width = 100, to = as.POSIXct(6, "UTC"))
+  b <- bin_samples(a, bin_width = 100, to = .as.POSIXct(6))
   expect_equal(sum(b$n), 6L)
 })
 
@@ -434,17 +437,17 @@ test_that("Provided from/to window sets the bin grid and the span", {
   a <- acc(
     list(matrix(1:100, ncol = 1, dimnames = list(NULL, "X"))),
     units::set_units(1, "Hz"),
-    start = as.POSIXct(0, tz = "UTC")
+    start = .as.POSIXct(0)
   )
 
   # Bins start on `from` even if it is not a multiple of the bin width
-  b <- bin_samples(a, bin_width = 4, from = as.POSIXct(3, "UTC"), to = as.POSIXct(11, "UTC"))
+  b <- bin_samples(a, bin_width = 4, from = .as.POSIXct(3), to = .as.POSIXct(11))
   expect_equal(as.numeric(min(b$time)), 3)
   expect_equal(as.numeric(max(b$time)), 7)
 
   # The default bin width is calculated from the overall plot window, not the
   # data span. (Default is 300 bins)
-  b <- bin_samples(a, from = as.POSIXct(0, "UTC"), to = as.POSIXct(300, "UTC"))
+  b <- bin_samples(a, from = .as.POSIXct(0), to = .as.POSIXct(300))
   expect_equal(attr(b, "bin_width"), 1)
 })
 
@@ -452,11 +455,11 @@ test_that("bin_samples errors on improper time window specifications", {
   a <- acc_example()
 
   expect_error(
-    bin_samples(a, from = as.POSIXct(10, "UTC"), to = as.POSIXct(3, "UTC")),
+    bin_samples(a, from = .as.POSIXct(10), to = .as.POSIXct(3)),
     "must be after"
   )
   expect_error(
-    bin_samples(a, from = as.POSIXct(1e6, "UTC"), to = as.POSIXct(2e6, "UTC")),
+    bin_samples(a, from = .as.POSIXct(1e6), to = .as.POSIXct(2e6)),
     "No samples fall"
   )
 
@@ -561,7 +564,7 @@ test_that("burst_timing extracts burst metadata into data.frame", {
 })
 
 test_that("burst_timing treats timestamps and single-sample bursts as instants", {
-  b <- burst_timing(as.POSIXct(c(0, 60, 120), tz = "UTC"))
+  b <- burst_timing(.as.POSIXct(c(0, 60, 120)))
 
   # We use artificially positive period so single timestamps don't get dropped
   expect_equal(b$samp_period, c(1, 1, 1))
@@ -572,7 +575,7 @@ test_that("burst_timing treats timestamps and single-sample bursts as instants",
   a <- acc(
     list(cbind(X = 1)),
     units::set_units(NA, "Hz"),
-    start = as.POSIXct(0, tz = "UTC")
+    start = .as.POSIXct(0)
   )
 
   expect_silent(b <- burst_timing(a))
@@ -595,7 +598,7 @@ test_that("burst_timing handles NA and malformed elements correctly", {
   a <- acc(
     list(cbind(X = 1:4), NULL, cbind(X = 1:2)),
     units::set_units(c(2, NA, 1), "Hz"),
-    start = as.POSIXct(c(0, NA, 100), tz = "UTC")
+    start = .as.POSIXct(c(0, NA, 100))
   )
 
   expect_silent(e <- burst_timing(a))
@@ -603,7 +606,7 @@ test_that("burst_timing handles NA and malformed elements correctly", {
   expect_equal(e$n_samp, c(4L, NA, 2L))
 
   # NA timestamps behave the same way: silently ignored, positions preserved.
-  expect_silent(e2 <- burst_timing(as.POSIXct(c(0, NA, 100), tz = "UTC")))
+  expect_silent(e2 <- burst_timing(.as.POSIXct(c(0, NA, 100))))
   expect_equal(e2$start, c(0, NA, 100))
 
   # An element that holds data but cannot be placed in time is a real defect,
@@ -611,7 +614,7 @@ test_that("burst_timing handles NA and malformed elements correctly", {
   d <- acc(
     list(cbind(X = 1:4), cbind(X = 1:4), cbind(X = 1:4)),
     units::set_units(c(2, 2, NA), "Hz"),
-    start = as.POSIXct(c(0, NA, 100), tz = "UTC")
+    start = .as.POSIXct(c(0, NA, 100))
   )
 
   expect_warning(e3 <- burst_timing(d), "2 bursts")
@@ -639,11 +642,13 @@ test_that("bin_to_sec normalizes any time width to seconds", {
 
 test_that("timestamp_to_sec normalizes a window edge to seconds", {
   expect_null(timestamp_to_sec(NULL))
-  expect_equal(timestamp_to_sec(as.POSIXct(60, tz = "UTC")), 60)
+  expect_equal(timestamp_to_sec(.as.POSIXct(60)), 60)
   expect_equal(timestamp_to_sec(as.Date("1970-01-02")), 86400)
 
-  expect_error(timestamp_to_sec(60), "must be a datetime")
-  expect_error(timestamp_to_sec(as.POSIXct(c(0, 60), tz = "UTC")), "length 1")
+  expect_equal(timestamp_to_sec(60), 60)
+  expect_error(timestamp_to_sec("1970-01-01"), "must be a timestamp")
+  expect_error(timestamp_to_sec(as.difftime(1, units = "hours")), "must be a timestamp")
+  expect_error(timestamp_to_sec(.as.POSIXct(c(0, 60))), "length 1")
   expect_error(timestamp_to_sec(as.POSIXct(NA)), "finite")
   expect_error(timestamp_to_sec(as.Date(NA)), "finite")
   expect_error(timestamp_to_sec(.POSIXct(Inf)), "finite")
@@ -654,4 +659,43 @@ test_that("format_bin labels sub-second bin widths", {
   expect_equal(format_bin(2.998167), "3 s")
   expect_equal(format_bin(1800), "30 min")
   expect_equal(format_bin(86400), "1 day")
+})
+
+test_that("`from`/`to` accept POSIXlt", {
+  # `is.finite()` has no POSIXlt method before R 4.3, so `timestamp_to_sec()`
+  # normalizes before checking. `strptime()` returns POSIXlt.
+  a <- acc(
+    list(cbind(X = 1:20)),
+    frequency = units::set_units(20, "Hz"),
+    start = .as.POSIXct(0)
+  )
+
+  expect_equal(timestamp_to_sec(as.POSIXlt(.as.POSIXct(60))), 60)
+  expect_error(timestamp_to_sec(as.POSIXlt(as.POSIXct(NA))), "finite")
+
+  lt <- strptime("1970-01-01 00:00:00", "%Y-%m-%d %H:%M:%S", tz = "UTC")
+  expect_no_error(b <- bin_samples(a, from = lt, bin_width = 1))
+  expect_equal(as.numeric(min(b$time)), 0)
+})
+
+test_that("Lanes and window edges accept every timestamp form", {
+  # Numeric lanes and bounds are seconds since the epoch, UTC, matching what a
+  # move2 numeric time column means
+  b <- bin_samples(gps = c(0, 5), bin_width = 5)
+  expect_identical(attr(b$time, "tzone"), "UTC")
+  expect_equal(as.numeric(min(b$time)), 0)
+
+  a <- acc(
+    list(cbind(X = 1:20)),
+    frequency = units::set_units(20, "Hz"),
+    start = .as.POSIXct(0)
+  )
+
+  # `from`/`to` bound an instant, so every spelling of the same instant agrees
+  by_num <- bin_samples(a, from = 0, to = 1, bin_width = 1)
+  by_ct <- bin_samples(a, from = .as.POSIXct(0), to = .as.POSIXct(1), bin_width = 1)
+  expect_equal(by_num$n, by_ct$n)
+
+  expect_equal(timestamp_to_sec(as.Date("1970-01-02")), 86400)
+  expect_equal(timestamp_to_sec(86400), 86400)
 })

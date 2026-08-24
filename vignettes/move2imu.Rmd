@@ -312,6 +312,16 @@ here, the wing beats are clearly visible on the Z axis:
 plot_imu_trace(a[422])
 ```
 
+The plot is returned unstyled. Additional arguments are passed to
+`dygraphs::dygraph()` and additional `dygraphs` layers can be added to
+the output plot. For instance, to add axis labels and ensure times are labeled
+in UTC instead of the browser's local time zone:
+
+```{r plot_styled, fig.width=6}
+plot_imu_trace(a[422], main = "Wing beats", ylab = "Acceleration (g)") |>
+  dygraphs::dyOptions(labelsUTC = TRUE)
+```
+
 <!-- ## A single burst in 3D -->
 
 <!-- For a closer look at one burst, the matrix of samples is just an -->
