@@ -14,32 +14,6 @@ gul_alt <- function() {
   to_alt_cols(gulls(), acc_colset_raw_xyz())
 }
 
-test_that("Config predicates validate colsets against supported defaults", {
-  matches_any <- function(cols, config) {
-    any(purrr::map_lgl(config, function(entry) colset_equal(entry, cols)))
-  }
-  cfg <- movebank_acc_colsets()
-
-  expect_true(matches_any(acc_colset_eobs(), cfg))
-  expect_true(matches_any(acc_colset_raw(), cfg))
-  expect_true(matches_any(acc_colset_acc(), cfg))
-  expect_true(matches_any(acc_colset_xyz(), cfg))
-  expect_true(matches_any(acc_colset_raw_xyz(), cfg))
-
-  # Compact-format acc cols must contain all listed cols
-  expect_false(matches_any(acc_colset_eobs()[1:2], cfg))
-  expect_false(matches_any(acc_colset_raw()[1], cfg))
-  expect_false(matches_any(acc_colset_acc()[1], cfg))
-
-  # Expanded-format acc cols can consist of a subset of allowable cols
-  expect_true(matches_any(acc_colset_xyz()[1:2], cfg))
-  expect_true(matches_any(acc_colset_raw_xyz()[3], cfg))
-
-  # Duplicates excluded
-  expect_false(matches_any(c(acc_colset_raw_xyz(), acc_colset_xyz()), cfg))
-  expect_false(matches_any(c(acc_colset_xyz(), acc_colset_xyz()), cfg))
-})
-
 test_that("Can find active colsets in move2 object", {
   skip_if_not_installed("move2")
   expect_identical(active_acc_colsets(albatrosses()), list(eobs = acc_colset_eobs()))
@@ -134,39 +108,6 @@ test_that("Currently supported colsets", {
   )
 })
 
-test_that("is_unique_named_subset correctly identifies subsets", {
-  tgt <- acc_colset_raw_xyz()
-
-  # Exact match
-  expect_true(is_unique_named_subset(tgt, tgt))
-
-  # Valid subset
-  expect_true(is_unique_named_subset(tgt[c("X", "Z")], tgt))
-  expect_true(is_unique_named_subset(tgt["Y"], tgt))
-
-  # Superset (concatenated colsets)
-  expect_false(is_unique_named_subset(c(acc_colset_raw_xyz(), acc_colset_xyz()), tgt))
-
-  # Wrong name-value mapping (Y mapped to X's column)
-  expect_false(is_unique_named_subset(
-    imu_colset(y = "acceleration_raw_x"),
-    tgt
-  ))
-
-  # Duplicate names
-  expect_false(is_unique_named_subset(c(tgt["X"], tgt["X"]), tgt))
-
-  # Custom columns not in target
-  expect_false(is_unique_named_subset(imu_colset(x = "my_col"), tgt))
-
-  # Empty input
-  expect_false(is_unique_named_subset(character(0), tgt))
-
-  # Names are not required if not present in both
-  expect_true(is_unique_named_subset(c("A", "B"), c("A", "B", "C")))
-  expect_false(is_unique_named_subset(c("A", "B"), c(A = "A", B = "B", C = "C")))
-})
-
 test_that("imu_colset() errors on invalid specifications", {
   # No columns specified
   expect_error(imu_colset(), "No IMU data columns specified")
@@ -255,29 +196,25 @@ test_that("Active colsets match alternate column names", {
   cs <- active_acc_colsets(alb_alt())
   
   expect_named(cs, "eobs_alt")
-  expect_true(
-    colset_equal(
-      cs[[1]],
-      c(
-        bursts = "eobs:accelerations-raw",
-        axes = "eobs:acceleration-axes",
-        frequency = "eobs:acceleration-sampling-frequency-per-axis"
-      )
+  expect_identical(
+    cs[[1]],
+    imu_colset(
+      bursts = "eobs:accelerations-raw",
+      axes = "eobs:acceleration-axes",
+      frequency = "eobs:acceleration-sampling-frequency-per-axis"
     )
   )
-  
+
   # Expanded-format: recognized as the hidden `raw_xyz_alt` colset
   cs <- active_acc_colsets(gul_alt())
-  
+
   expect_named(cs, "raw_xyz_alt")
-  expect_true(
-    colset_equal(
-      cs[[1]],
-      c(
-        X = "acceleration-raw-x",
-        Y = "acceleration-raw-y",
-        Z = "acceleration-raw-z"
-      )
+  expect_identical(
+    cs[[1]],
+    imu_colset(
+      x = "acceleration-raw-x",
+      y = "acceleration-raw-y",
+      z = "acceleration-raw-z"
     )
   )
 })

@@ -525,24 +525,6 @@ gyro_colset_xyz <- function() {
 
 # Colset predicates (S3, dispatched on format subclass) ------------------------
 
-# Determine if a colset is equivalent to another vector of character cols
-# Compact colsets require all columns present to be equivalent.
-# Expanded colsets are still considered equivalent even if only a subset
-# of axis cols is provided.
-colset_equal <- function(colset, cols) {
-  UseMethod("colset_equal")
-}
-
-#' @export
-colset_equal.imu_colset_compact <- function(colset, cols) {
-  is_unique_named_subset(cols, colset) && length(cols) == length(colset)
-}
-
-#' @export
-colset_equal.imu_colset_expanded <- function(colset, cols) {
-  is_unique_named_subset(cols, colset)
-}
-
 # Determine whether a colset is "active" in `x`. Active colsets
 # are present and contain data in all necessary columns. Compact colsets
 # require all columns in the set to be present and contain data. Expanded
@@ -601,13 +583,6 @@ to_alt_colset <- function(colset) {
     rlang::set_names(to_alt_names(unclass(colset)), names(colset)),
     type = colset_type(colset)
   )
-}
-
-# Check that `x` is a non-empty, non-duplicated, name-value subset of `target`
-is_unique_named_subset <- function(x, y) {
-  length(x) > 0 &&
-    anyDuplicated(names(x)) == 0 &&
-    identical(x[names(x)], y[names(x)])
 }
 
 cols_empty <- function(x, cols) {
