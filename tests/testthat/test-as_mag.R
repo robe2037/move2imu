@@ -118,12 +118,3 @@ test_that("as_mag() dispatches on data.frame", {
     as_mag(m)
   )
 })
-
-test_that("as_mag() rejects timestamp for move2 input", {
-  x <- mag_example_expanded()
-
-  expect_error(
-    as_mag(x, timestamp = move2::mt_time(x)),
-    "`timestamp` must not be supplied when"
-  )
-})

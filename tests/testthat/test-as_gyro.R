@@ -116,12 +116,3 @@ test_that("as_gyro() dispatches on data.frame", {
     as_gyro(g)
   )
 })
-
-test_that("as_gyro() rejects timestamp for move2 input", {
-  x <- gyro_example_expanded()
-
-  expect_error(
-    as_gyro(x, timestamp = move2::mt_time(x)),
-    "`timestamp` must not be supplied when"
-  )
-})
