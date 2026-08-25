@@ -361,6 +361,43 @@ test_that("as_acc() rejects plain character vector for colset", {
   )
 })
 
+test_that("as_acc() errors when expanded-format columns have mismatched units", {
+  g <- gulls()
+
+  g$acceleration_raw_x <- units::set_units(
+    as.numeric(g$acceleration_raw_x),
+    "m/s^2"
+  )
+
+  expect_error(
+    as_acc(g, colset = acc_colset_raw_xyz()),
+    "Multiple units detected"
+  )
+})
+
+test_that("as_acc() uses column units as burst units for expanded data", {
+  cols <- as.character(acc_colset_raw_xyz())
+
+  g_plain <- gulls()
+  g_units <- gulls()
+
+  for (col in cols) {
+    g_plain[[col]] <- as.numeric(g_plain[[col]])
+    g_units[[col]] <- units::set_units(as.numeric(g_units[[col]]), "m/s^2")
+  }
+
+  a <- as_acc(g_units, colset = acc_colset_raw_xyz(), drop = TRUE)
+
+  expect_s3_class(bursts(a)[[1]], "units")
+  expect_identical(units::deparse_unit(bursts(a)[[1]]), "m s-2")
+
+  # Units aside, the parse is unchanged
+  expect_identical(
+    drop_imu_units(a),
+    as_acc(g_plain, colset = acc_colset_raw_xyz(), drop = TRUE)
+  )
+})
+
 test_that("as_acc() errors on swapped burst column types", {
   a <- albatrosses()
 
