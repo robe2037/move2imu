@@ -15,32 +15,42 @@ acc_burst_example <- function(x = NULL, y = NULL, z = NULL) {
   new_burst_list(list(do.call(cbind, list(X = x, Y = y, Z = z))), "acc")
 }
 
-# Fabricated expanded-format mag move2. Uses the column names expected by
-# `mag_colset_xyz()` (i.e. `magnetic_field_{x,y,z}`). Two bursts at 10 Hz,
-# separated by a gap so `as_mag()` splits them.
-mag_example_expanded <- function(id = "expanded") {
-  t <- data.frame(
+# Call a sensor's `data.frame` method on a fixture, supplying the `timestamp`
+# and `track_id` it requires from the fixture's own columns. Improves
+# legibility where the data.frame entry point is the thing under test.
+as_mag_df <- function(d, ...) {
+  as_mag(d, timestamp = d$timestamp, track_id = d$id, ...)
+}
+
+as_gyro_df <- function(d, ...) {
+  as_gyro(d, timestamp = d$timestamp, track_id = d$id, ...)
+}
+
+# Fabricated mag/gyro fixtures. Each sensor has an expanded- and a
+# compact-format variant, built as a plain data.frame so it can be pushed
+# through the `data.frame` entry point without move2 installed. The `move2`
+# counterpart of each is derived from the same data.frame, so both entry points
+# are exercised against one definition of the fixture.
+
+# Uses the column names expected by `mag_colset_xyz()` (i.e.
+# `magnetic_field_{x,y,z}`). Two bursts at 10 Hz, separated by a gap so
+# `as_mag()` splits them.
+mag_example_expanded_df <- function(id = "expanded") {
+  data.frame(
     id = id,
     magnetic_field_x = as.numeric(1:10),
     magnetic_field_y = as.numeric(11:20),
     magnetic_field_z = as.numeric(21:30),
     timestamp = .as.POSIXct(c(seq(1, 1.4, by = 0.1), seq(3, 3.4, by = 0.1))),
-    x = 1, y = 1
-  )
-
-  move2::mt_as_move2(
-    t,
-    coords = c("x", "y"),
-    time_column = "timestamp",
-    track_id_column = "id"
+    x = 1,
+    y = 1
   )
 }
 
-# Fabricated compact-format mag move2. Uses the column names expected by
-# `mag_colset_raw()`. Two XYZ bursts at 10 Hz, separated by a gap so that
-# `merge_imu` does not collapse them.
-mag_example_compact <- function(id = "compact") {
-  t <- data.frame(
+# Uses the column names expected by `mag_colset_raw()`. Two XYZ bursts at 10 Hz,
+# separated by a gap so that `merge_imu` does not collapse them.
+mag_example_compact_df <- function(id = "compact") {
+  data.frame(
     id = id,
     magnetic_field_axes = "XYZ",
     magnetic_field_sampling_frequency_per_axis = 10,
@@ -49,43 +59,30 @@ mag_example_compact <- function(id = "compact") {
       paste0(rep(6:10, each = 3), collapse = " ")
     ),
     timestamp = .as.POSIXct(c(10, 30)),
-    x = 1, y = 1
-  )
-
-  move2::mt_as_move2(
-    t,
-    coords = c("x", "y"),
-    time_column = "timestamp",
-    track_id_column = "id"
+    x = 1,
+    y = 1
   )
 }
 
-# Fabricated expanded-format gyro move2. Uses the column names expected by
-# `gyro_colset_xyz()` (i.e. `angular_velocity_{x,y,z}`). Two bursts at 10 Hz,
-# separated by a gap so `as_gyro()` splits them.
-gyro_example_expanded <- function(id = "expanded") {
-  t <- data.frame(
+# Uses the column names expected by `gyro_colset_xyz()` (i.e.
+# `angular_velocity_{x,y,z}`). Two bursts at 10 Hz, separated by a gap so
+# `as_gyro()` splits them.
+gyro_example_expanded_df <- function(id = "expanded") {
+  data.frame(
     id = id,
     angular_velocity_x = as.numeric(1:10),
     angular_velocity_y = as.numeric(11:20),
     angular_velocity_z = as.numeric(21:30),
     timestamp = .as.POSIXct(c(seq(1, 1.4, by = 0.1), seq(3, 3.4, by = 0.1))),
-    x = 1, y = 1
-  )
-
-  move2::mt_as_move2(
-    t,
-    coords = c("x", "y"),
-    time_column = "timestamp",
-    track_id_column = "id"
+    x = 1,
+    y = 1
   )
 }
 
-# Fabricated compact-format gyro move2. Uses the column names expected by
-# `gyro_colset_raw()`. Two XYZ bursts at 10 Hz, separated by a gap so that
-# `merge_imu` does not collapse them.
-gyro_example_compact <- function(id = "compact") {
-  t <- data.frame(
+# Uses the column names expected by `gyro_colset_raw()`. Two XYZ bursts at
+# 10 Hz, separated by a gap so that `merge_imu` does not collapse them.
+gyro_example_compact_df <- function(id = "compact") {
+  data.frame(
     id = id,
     gyroscope_axes = "XYZ",
     gyroscope_sampling_frequency_per_axis = 10,
@@ -94,11 +91,41 @@ gyro_example_compact <- function(id = "compact") {
       paste0(rep(6:10, each = 3), collapse = " ")
     ),
     timestamp = .as.POSIXct(c(10, 30)),
-    x = 1, y = 1
+    x = 1,
+    y = 1
   )
+}
 
+mag_example_expanded <- function() {
   move2::mt_as_move2(
-    t,
+    mag_example_expanded_df(),
+    coords = c("x", "y"),
+    time_column = "timestamp",
+    track_id_column = "id"
+  )
+}
+
+mag_example_compact <- function(id = "compact") {
+  move2::mt_as_move2(
+    mag_example_compact_df(),
+    coords = c("x", "y"),
+    time_column = "timestamp",
+    track_id_column = "id"
+  )
+}
+
+gyro_example_expanded <- function(id = "expanded") {
+  move2::mt_as_move2(
+    gyro_example_expanded_df(),
+    coords = c("x", "y"),
+    time_column = "timestamp",
+    track_id_column = "id"
+  )
+}
+
+gyro_example_compact <- function(id = "compact") {
+  move2::mt_as_move2(
+    gyro_example_compact_df(),
     coords = c("x", "y"),
     time_column = "timestamp",
     track_id_column = "id"

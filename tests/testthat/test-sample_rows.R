@@ -131,6 +131,18 @@ test_that("acc_sample_rows() accepts a plain data.frame", {
   )
 })
 
+test_that("mag_sample_rows() and gyro_sample_rows() accept a plain data.frame", {
+  m <- mag_example_compact_df()
+  g <- gyro_example_compact_df()
+
+  expect_identical(mag_sample_rows(m), c(TRUE, TRUE))
+  expect_identical(gyro_sample_rows(g), c(TRUE, TRUE))
+
+  # A sensor with no active colset in `x` flags no rows at all
+  expect_identical(gyro_sample_rows(m), c(FALSE, FALSE))
+  expect_identical(acc_sample_rows(m), c(FALSE, FALSE))
+})
+
 test_that("acc_sample_rows handles a zero-row input", {
   h <- acc_sample_rows(data.frame())
   expect_type(h, "logical")

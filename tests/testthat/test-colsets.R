@@ -106,6 +106,21 @@ test_that("Currently supported colsets", {
       raw_xyz = acc_colset_raw_xyz()
     )
   )
+  expect_identical(
+    movebank_mag_colsets(),
+    list(
+      raw = mag_colset_raw(),
+      xyz = mag_colset_xyz(),
+      raw_xyz = mag_colset_raw_xyz()
+    )
+  )
+  expect_identical(
+    movebank_gyro_colsets(),
+    list(
+      raw = gyro_colset_raw(),
+      xyz = gyro_colset_xyz()
+    )
+  )
 })
 
 test_that("imu_colset() errors on invalid specifications", {
