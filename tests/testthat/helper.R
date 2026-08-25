@@ -15,9 +15,8 @@ acc_burst_example <- function(x = NULL, y = NULL, z = NULL) {
   new_burst_list(list(do.call(cbind, list(X = x, Y = y, Z = z))), "acc")
 }
 
-# Call a sensor's `data.frame` method on a fixture, supplying the `timestamp`
-# and `track_id` it requires from the fixture's own columns. Improves
-# legibility where the data.frame entry point is the thing under test.
+# aliases for as_*() for data.frame inputs. Simplifies code in the test suite
+# by not needing to specify `timestamp` and `track_id` at all call sites.
 as_mag_df <- function(d, ...) {
   as_mag(d, timestamp = d$timestamp, track_id = d$id, ...)
 }
@@ -26,18 +25,68 @@ as_gyro_df <- function(d, ...) {
   as_gyro(d, timestamp = d$timestamp, track_id = d$id, ...)
 }
 
+as_acc_df <- function(d, ...) {
+  as_acc(d, timestamp = d$timestamp, track_id = d$id, ...)
+}
+
+# Convert albatrosses() and gulls() move2 to data.frame counterparts.
+#
+# This removes move2 class, sf attributes, integer64 and sfc columns (both
+# handled by move2) and renames the track_id column for simplicity in tests.
+move2_to_df <- function(x) {
+  y <- unclass(x)
+
+  # integer64 columns deserialize, but require bit64 (which comes with move2) to
+  # be compared correctly between move2 and data.frame outputs. We remove them.
+  y <- y[!vapply(y, inherits, logical(1), "integer64")]
+  y <- y[!vapply(y, inherits, logical(1), "sfc")]
+
+  # Set explicit names for ID cols for consistent access
+  names(y)[names(y) == attr(x, "time_column")] <- "timestamp"
+  names(y)[names(y) == attr(x, "track_id_column")] <- "id"
+
+  # Drop the move2 attributes (e.g. `track_data`)
+  attributes(y) <- list(
+    names = names(y),
+    row.names = .set_row_names(length(y[[1]])),
+    class = "data.frame"
+  )
+
+  y
+}
+
+# Convert a data.frame fixture into the move2 it stands in for. Every fixture is
+# defined as a data.frame, so this is the single place that conversion happens --
+# only tests actually about the move2 entry point need it.
+df_to_move2 <- function(d) {
+  move2::mt_as_move2(
+    d,
+    coords = c("x", "y"),
+    time_column = "timestamp",
+    track_id_column = "id"
+  )
+}
+
+albatrosses_df <- function() {
+  move2_to_df(read_example("albatrosses"))
+}
+
+gulls_df <- function() {
+  move2_to_df(read_example("gulls"))
+}
+
 # Fabricated mag/gyro fixtures. Each sensor has an expanded- and a
 # compact-format variant, built as a plain data.frame so it can be pushed
 # through the `data.frame` entry point without move2 installed. The `move2`
 # counterpart of each is derived from the same data.frame, so both entry points
 # are exercised against one definition of the fixture.
-
+#
 # Uses the column names expected by `mag_colset_xyz()` (i.e.
 # `magnetic_field_{x,y,z}`). Two bursts at 10 Hz, separated by a gap so
 # `as_mag()` splits them.
-mag_example_expanded_df <- function(id = "expanded") {
+mag_example_expanded <- function() {
   data.frame(
-    id = id,
+    id = "exp",
     magnetic_field_x = as.numeric(1:10),
     magnetic_field_y = as.numeric(11:20),
     magnetic_field_z = as.numeric(21:30),
@@ -49,9 +98,9 @@ mag_example_expanded_df <- function(id = "expanded") {
 
 # Uses the column names expected by `mag_colset_raw()`. Two XYZ bursts at 10 Hz,
 # separated by a gap so that `merge_imu` does not collapse them.
-mag_example_compact_df <- function(id = "compact") {
+mag_example_compact <- function() {
   data.frame(
-    id = id,
+    id = "comp",
     magnetic_field_axes = "XYZ",
     magnetic_field_sampling_frequency_per_axis = 10,
     magnetic_fields_raw = c(
@@ -67,9 +116,9 @@ mag_example_compact_df <- function(id = "compact") {
 # Uses the column names expected by `gyro_colset_xyz()` (i.e.
 # `angular_velocity_{x,y,z}`). Two bursts at 10 Hz, separated by a gap so
 # `as_gyro()` splits them.
-gyro_example_expanded_df <- function(id = "expanded") {
+gyro_example_expanded <- function() {
   data.frame(
-    id = id,
+    id = "exp",
     angular_velocity_x = as.numeric(1:10),
     angular_velocity_y = as.numeric(11:20),
     angular_velocity_z = as.numeric(21:30),
@@ -81,9 +130,9 @@ gyro_example_expanded_df <- function(id = "expanded") {
 
 # Uses the column names expected by `gyro_colset_raw()`. Two XYZ bursts at
 # 10 Hz, separated by a gap so that `merge_imu` does not collapse them.
-gyro_example_compact_df <- function(id = "compact") {
+gyro_example_compact <- function() {
   data.frame(
-    id = id,
+    id = "comp",
     gyroscope_axes = "XYZ",
     gyroscope_sampling_frequency_per_axis = 10,
     angular_velocities_raw = c(
@@ -96,134 +145,34 @@ gyro_example_compact_df <- function(id = "compact") {
   )
 }
 
-mag_example_expanded <- function() {
-  move2::mt_as_move2(
-    mag_example_expanded_df(),
-    coords = c("x", "y"),
-    time_column = "timestamp",
-    track_id_column = "id"
-  )
-}
-
-mag_example_compact <- function(id = "compact") {
-  move2::mt_as_move2(
-    mag_example_compact_df(),
-    coords = c("x", "y"),
-    time_column = "timestamp",
-    track_id_column = "id"
-  )
-}
-
-gyro_example_expanded <- function(id = "expanded") {
-  move2::mt_as_move2(
-    gyro_example_expanded_df(),
-    coords = c("x", "y"),
-    time_column = "timestamp",
-    track_id_column = "id"
-  )
-}
-
-gyro_example_compact <- function(id = "compact") {
-  move2::mt_as_move2(
-    gyro_example_compact_df(),
-    coords = c("x", "y"),
-    time_column = "timestamp",
-    track_id_column = "id"
-  )
-}
-
-# Fabricated expanded-format acc move2 built from an arbitrary vector of
+# Example expanded-format acc data built from an arbitrary vector of
 # timestamps (seconds relative to `origin`). Used to exercise burst splitting,
 # the tolerance, and span-based frequency in `as_acc()`.
-expanded_acc <- function(ts, id = 1) {
-  t <- data.frame(
+acc_example_expanded <- function(ts, id = 1) {
+  data.frame(
     id = id,
     acceleration_x = seq_along(ts),
     acceleration_y = seq_along(ts),
     acceleration_z = seq_along(ts),
     timestamp = as.POSIXct(ts, tz = "UTC", origin = "2020-01-01"),
-    x = 1, y = 1
-  )
-  move2::mt_as_move2(
-    t,
-    coords = c("x", "y"),
-    time_column = "timestamp",
-    track_id_column = "id"
+    x = 1,
+    y = 1
   )
 }
 
-# Build sample data source to simulate case where compact-format data is actually
-# continuous, as the bursts are adjacent in time.
-albatrosses_messy <- function() {
-  d <- albatrosses()
-  d <- d[d$sensor_type_id == 2365683, ]
-
-  # Fake time series with some records that represent continuous data along
-  # with some longer gaps
-  ts1 <- seq(
-    min(move2::mt_time(d)),
-    by = "12 s",
-    length.out = 10
-  )
-
-  ts2 <- seq(
-    ts1[length(ts1)] + units::as_difftime(units::set_units(5, "min")),
-    by = "5 min",
-    length.out = 2
-  )
-
-  ts3 <- seq(
-    ts2[length(ts2)] + units::as_difftime(units::set_units(5, "min")),
-    by = "12 s",
-    length.out = nrow(d) - (length(ts1) + length(ts2))
-  )
-
-  move2::mt_time(d) <- c(ts1, ts2, ts3)
-
-  # Should not collapse continuous data across different axes
-  levels(d$eobs_acceleration_axes) <- c("XY", "XZ", "XYZ")
-  d[c(4, 5, 6), "eobs_acceleration_axes"] <- "XYZ"
-
-  d[c(44, 45), "eobs_acceleration_axes"] <- "XZ"
-
-  # Adjust so that the duration of the burst is the same:
-  d[c(4, 5, 6), "eobs_accelerations_raw"] <- paste0(
-    d[c(4, 5, 6), ][["eobs_accelerations_raw"]], " ", paste0(rep(1, 60), collapse = " ")
-  )
-
-  # Should not collapse continuous data across different frequencies
-  d[c(31, 32), "eobs_acceleration_sampling_frequency_per_axis"] <- units::set_units(10, "Hz")
-  d[c(31, 32), "eobs_accelerations_raw"] <- paste0(
-    d[c(31, 32), ][["eobs_accelerations_raw"]], " ", paste0(rep(1, 120), collapse = " ")
-  )
-
-  d
-}
-
-# Fabricated compact-format acc move2 built from an arbitrary timestamp vector.
+# Example compact-format acc data built from an arbitrary timestamp vector.
 #
-# `timestamp` becomes the time column verbatim -- callers wanting POSIXct pass
-# POSIXct. That is deliberate rather than a convenience left undone: the
-# boundary-normalization tests have to hand `as_acc()` a raw `numeric` or `Date`
-# column, both of which move2 permits.
-#
-# Each row holds one 20-sample XYZ burst. The default `frequency` leaves a gap
-# between rows, while a frequency that makes each burst span the gap exercises
-# merging.
-compact_acc <- function(timestamp, frequency = 2000, id = "compact") {
-  t <- data.frame(
+# Each row holds one 20-sample XYZ burst spanning a hundredth of a second, so
+# rows stay separate bursts at any realistic spacing. Merging of adjacent
+# compact bursts is covered in `test-split_merge.R`.
+acc_example_compact <- function(ts, id = "comp") {
+  data.frame(
     id = id,
     eobs_acceleration_axes = "XYZ",
-    eobs_acceleration_sampling_frequency_per_axis = frequency,
+    eobs_acceleration_sampling_frequency_per_axis = 2000,
     eobs_accelerations_raw = paste0(rep(1:20, each = 3), collapse = " "),
-    timestamp = timestamp,
-    x = 1, y = 1
-  )
-
-  move2::mt_as_move2(
-    t,
-    coords = c("x", "y"),
-    time_column = "timestamp",
-    track_id_column = "id"
+    timestamp = ts,
+    x = 1,
+    y = 1
   )
 }

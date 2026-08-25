@@ -31,19 +31,18 @@ test_that("Can combine adjacent bursts into single burst", {
 })
 
 test_that("Can merge with drop = FALSE", {
-  skip_if_not_installed("move2")
-  d <- albatrosses()
-  d <- move2::mt_set_track_id(d, rep("tmp", nrow(d)))
-  move2::mt_time(d) <- seq(
-    min(move2::mt_time(d)),
+  d <- albatrosses_df()
+  d$id <- rep("tmp", nrow(d))
+  d$timestamp <- seq(
+    min(d$timestamp),
     by = "12 s",
     length.out = nrow(d)
   )
-  a <- as_acc(d, merge_continuous = TRUE, drop = FALSE)
+  a <- as_acc_df(d, merge_continuous = TRUE, drop = FALSE)
 
   expect_length(a, nrow(d))
   expect_length(a[!is.na(a)], 9)
-  expect_identical(a[!is.na(a)], as_acc(d, drop = TRUE))
+  expect_identical(a[!is.na(a)], as_acc_df(d, drop = TRUE))
 })
 
 test_that("Same merged result if drop = TRUE regardless of NAs", {
@@ -98,28 +97,26 @@ test_that("Can combine adjacent bursts with embedded NA", {
 })
 
 test_that("drop = FALSE places merged bursts at correct indices", {
-  skip_if_not_installed("move2")
-  d <- albatrosses()
-  d <- move2::mt_set_track_id(d, rep("tmp", nrow(d)))
-  move2::mt_time(d) <- seq(
-    min(move2::mt_time(d)),
+  d <- albatrosses_df()
+  d$id <- rep("tmp", nrow(d))
+  d$timestamp <- seq(
+    min(d$timestamp),
     by = "12 s",
     length.out = nrow(d)
   )
-  a <- as_acc(d, merge_continuous = TRUE, drop = FALSE)
+  a <- as_acc_df(d, merge_continuous = TRUE, drop = FALSE)
 
   # Start times of merged bursts should match the dropped version
-  expect_identical(starts(a[!is.na(a)]), starts(as_acc(d, drop = TRUE)))
+  expect_identical(starts(a[!is.na(a)]), starts(as_acc_df(d, drop = TRUE)))
 
   # Positions of non-NA entries should be a subset of the original burst positions
-  a_raw <- as_acc(d, merge_continuous = FALSE, drop = FALSE)
+  a_raw <- as_acc_df(d, merge_continuous = FALSE, drop = FALSE)
   expect_true(all(which(!is.na(a)) %in% which(!is.na(a_raw))))
 })
 
 test_that("Non-mergeable bursts ignore merge arg regardless of drop arg", {
-  skip_if_not_installed("move2")
-  g1 <- as_acc(gulls(), drop = FALSE, colset = acc_colset_raw_xyz())
-  g2 <- as_acc(gulls(), merge_continuous = FALSE, drop = FALSE, colset = acc_colset_raw_xyz())
+  g1 <- as_acc_df(gulls_df(), drop = FALSE, colset = acc_colset_raw_xyz())
+  g2 <- as_acc_df(gulls_df(), merge_continuous = FALSE, drop = FALSE, colset = acc_colset_raw_xyz())
   expect_identical(g1, g2)
 })
 

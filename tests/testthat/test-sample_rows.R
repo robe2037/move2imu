@@ -1,27 +1,21 @@
 test_that("acc_sample_rows flags rows with raw acc data (compact format)", {
-  skip_if_not_installed("move2")
-
   # For compact-format data (one row per burst), every row that contributes
   # data also stores a non-NA burst in the as_acc() output
-  alb <- albatrosses()
-  expect_identical(acc_sample_rows(alb), !is.na(as_acc(alb)))
+  alb <- albatrosses_df()
+  expect_identical(acc_sample_rows(alb), !is.na(as_acc_df(alb)))
 })
 
 test_that("acc_sample_rows flags rows with raw acc data (expanded format)", {
-  skip_if_not_installed("move2")
-
-  gul <- gulls()
+  gul <- gulls_df()
 
   h <- acc_sample_rows(gul)
 
   expect_identical(h, !is.na(gul$acceleration_raw_x))
-  expect_equal(sum(h), sum(n_samples(as_acc(gul, drop = TRUE))))
+  expect_equal(sum(h), sum(n_samples(as_acc_df(gul, drop = TRUE))))
 })
 
 test_that("acc_sample_rows returns a logical vector parallel to nrow(x)", {
-  skip_if_not_installed("move2")
-
-  alb <- albatrosses()
+  alb <- albatrosses_df()
 
   h <- acc_sample_rows(alb)
 
@@ -31,9 +25,7 @@ test_that("acc_sample_rows returns a logical vector parallel to nrow(x)", {
 })
 
 test_that("acc_sample_rows respects an explicit colset", {
-  skip_if_not_installed("move2")
-
-  gul <- gulls()
+  gul <- gulls_df()
 
   gul$acc_x <- gul$acceleration_raw_x
   gul$acc_y <- gul$acceleration_raw_y
@@ -54,9 +46,7 @@ test_that("acc_sample_rows respects an explicit colset", {
 })
 
 test_that("*_sample_rows() returns all-FALSE when no active colset is detected", {
-  skip_if_not_installed("move2")
-
-  alb <- albatrosses()
+  alb <- albatrosses_df()
 
   h_mag <- mag_sample_rows(alb)
   h_gyro <- gyro_sample_rows(alb)
@@ -68,14 +58,12 @@ test_that("*_sample_rows() returns all-FALSE when no active colset is detected",
 })
 
 test_that("acc_sample_rows returns TRUE for rows where multiple colsets overlap", {
-  skip_if_not_installed("move2")
-
-  gul <- gulls()
+  gul <- gulls_df()
   gul$acceleration_x <- gul$acceleration_raw_x
   gul$acceleration_y <- gul$acceleration_raw_y
   gul$acceleration_z <- gul$acceleration_raw_z
 
-  expect_error(suppressWarnings(as_acc(gul)), "multiple sources")
+  expect_error(suppressWarnings(as_acc_df(gul)), "multiple sources")
 
   h <- acc_sample_rows(gul)
 
@@ -85,11 +73,9 @@ test_that("acc_sample_rows returns TRUE for rows where multiple colsets overlap"
 })
 
 test_that("acc_sample_rows returns the union when colsets cover disjoint rows", {
-  skip_if_not_installed("move2")
-
-  # Partition the acc data in gulls() into two disjoint colsets.
+  # Partition the acc data in gulls_df() into two disjoint colsets.
   # acc_sample_rows() should identify TRUE when either colset contains acc data
-  gul <- gulls()
+  gul <- gulls_df()
 
   acc_rows <- which(!is.na(gul$acceleration_raw_x))
   to_xyz <- acc_rows[seq_along(acc_rows) %% 2 == 0]
@@ -132,8 +118,8 @@ test_that("acc_sample_rows() accepts a plain data.frame", {
 })
 
 test_that("mag_sample_rows() and gyro_sample_rows() accept a plain data.frame", {
-  m <- mag_example_compact_df()
-  g <- gyro_example_compact_df()
+  m <- mag_example_compact()
+  g <- gyro_example_compact()
 
   expect_identical(mag_sample_rows(m), c(TRUE, TRUE))
   expect_identical(gyro_sample_rows(g), c(TRUE, TRUE))
