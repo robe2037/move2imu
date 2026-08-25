@@ -40,7 +40,7 @@ as_mag(x, ...)
 will typically be loaded from disk with \code{\link[move2:mt_read]{move2::mt_read()}} or downloaded
 using \code{\link[move2:movebank_download_study]{move2::movebank_download_study()}}.}
 
-\item{...}{currently not used}
+\item{...}{These dots are for future extensions and must be empty.}
 
 \item{colset}{An \code{imu_colset} object or list of \code{imu_colset} objects
 specifying the columns of \code{x} that contain magnetometer data. By default,

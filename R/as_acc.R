@@ -61,7 +61,7 @@
 #'   output will match the number of rows in the input data `x` and
 #'   bursts will be stored at the index location corresponding to the start time
 #'   of the burst.
-#' @param ... currently not used
+#' @param ... These dots are for future extensions and must be empty.
 #'
 #' @details
 #' By default (`drop = FALSE`), the output vector will be the same length
