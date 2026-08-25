@@ -178,3 +178,43 @@ test_that("as_acc() treats NULL track_id as a single track", {
     one_track
   )
 })
+
+test_that("as_acc() validates tolerances", {
+  compact <- data.frame(
+    acceleration_axes = "XYZ",
+    acceleration_sampling_frequency_per_axis = 10,
+    accelerations_raw = "1 2 3 4 5 6",
+    ts = .as.POSIXct(1)
+  )
+
+  expect_error(
+    as_acc(compact, timestamp = compact$ts, track_id = NULL, min_freq = -1),
+    "`min_freq` must be greater than or equal to 0"
+  )
+  expect_error(
+    as_acc(
+      compact,
+      timestamp = compact$ts,
+      track_id = NULL,
+      freq_tol = -1,
+      merge_continuous = FALSE
+    ),
+    "`freq_tol` must be greater than or equal to 0"
+  )
+  expect_error(
+    as_acc(
+      compact,
+      timestamp = compact$ts,
+      track_id = NULL,
+      gap_tol = -1,
+      merge_continuous = FALSE
+    ),
+    "`gap_tol` must be greater than or equal to 0"
+  )
+
+  # An input with no rows to parse is checked the same way
+  expect_error(
+    as_acc(compact[0, ], timestamp = compact$ts[0], track_id = NULL, gap_tol = -1),
+    "`gap_tol` must be greater than or equal to 0"
+  )
+})

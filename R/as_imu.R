@@ -94,6 +94,19 @@ as_imu_table <- function(x,
                          drop = FALSE) {
   timestamp <- timestamp_to_POSIXct(timestamp, arg = "timestamp")
 
+  # Check input arg validity, including units matching and positive values
+  if (as.numeric(as_hz(min_freq)) < 0) {
+    cli::cli_abort("{.arg min_freq} must be greater than or equal to 0.")
+  }
+
+  if (as.numeric(freq_tol) < 0) {
+    cli::cli_abort("{.arg freq_tol} must be greater than or equal to 0.")
+  }
+
+  if (as.numeric(units::set_units(gap_tol, "s")) < 0) {
+    cli::cli_abort("{.arg gap_tol} must be greater than or equal to 0.")
+  }
+
   if (nrow(x) == 0) {
     return(new_imu(sensor))
   }
@@ -383,14 +396,6 @@ parse_bursts <- function(x,
   # Coerce to Hz at the boundary so `1 / min_freq` below is in seconds,
   # matching the second-based sample intervals, regardless of the unit supplied.
   min_freq <- as_hz(min_freq)
-
-  if (as.numeric(min_freq) < 0) {
-    cli::cli_abort("{.arg min_freq} must be greater than or equal to 0.")
-  }
-
-  if (as.numeric(freq_tol) < 0) {
-    cli::cli_abort("{.arg freq_tol} must be greater than or equal to 0.")
-  }
 
   min_interval <- (1 / as.numeric(min_freq)) + fp_time_floor
 
