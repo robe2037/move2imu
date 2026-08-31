@@ -184,15 +184,39 @@ For more details about the ways Movebank stores acceleration data, see
 
 ### Fine-tuning data import
 
-If you have your own data stored using column names that don't adhere
+move2imu also supports IMU data extraction from `data.frame` objects. The
+workflow is identical to that for `move2` objects, except that you will need
+to specify a vector of timestamps and track IDs separately (`move2` objects
+store this metadata and provide it to `as_*()` directly).
+
+```{r}
+x <- data.frame(
+  acceleration_x = c(1, 2, 3, 4),
+  acceleration_y = c(5, 6, 7, 8),
+  acceleration_z = c(9, 10, 11, 12),
+  timestamp = as.POSIXct("2024-01-01", tz = "UTC") + seq(0, 0.3, by = 0.1),
+  id = "tag_1"
+)
+
+as_acc(x, timestamp = x$timestamp, track_id = x$id)
+```
+
+Further, if your data are stored using column names that don't adhere
 to the Movebank data model, you can still use `as_acc()` to load them, provided
 that the data themselves are stored in a recognizable format (see 
 `imu_colset()`). Use `imu_colset()` to define the column names that correspond to each
 axis of acceleration data in your input data source:
 
-```{r, eval = FALSE}
-# Extract acc data from the "acc_x" and "acc_y" columns
-a <- as_acc(x, colset = imu_colset(x = "acc_x", y = "acc_y"))
+```{r}
+# The same samples, under custom column names
+names(x)[1:3] <- c("acc_x", "acc_y", "acc_z")
+
+as_acc(
+  x,
+  colset = imu_colset(x = "acc_x", y = "acc_y", z = "acc_z"),
+  timestamp = x$timestamp,
+  track_id = x$id
+)
 ```
 
 ## Exploring bursts
