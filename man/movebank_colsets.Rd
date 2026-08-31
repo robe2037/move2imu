@@ -19,19 +19,19 @@ A named list of \code{imu_colset} objects.
 \description{
 Movebank has several standard ways to store data for each IMU sensor. These
 functions show the recognized columns for each sensor that can be extracted
-from a \code{move2} object by default.
+from a \code{move2} or \code{data.frame} by default.
 \itemize{
 \item \code{movebank_acc_colsets()} — standard column sets for \code{\link[=as_acc]{as_acc()}}.
 \item \code{movebank_mag_colsets()} — standard column sets for \code{\link[=as_mag]{as_mag()}}.
 \item \code{movebank_gyro_colsets()} — standard column sets for \code{\link[=as_gyro]{as_gyro()}}.
 }
 
-To extract IMU data from a \code{move2} with column names that don't correspond to
+To extract IMU data from columns whose names don't correspond to
 Movebank's conventions, provide a custom set of IMU columns with
 \code{\link[=imu_colset]{imu_colset()}}.
 }
 \details{
-\code{move2} objects store IMU data in two ways:
+IMU data are stored in two ways:
 \itemize{
 \item \strong{Expanded-format} columns store each IMU sample (possibly for multiple axes)
 in its own row.
@@ -66,5 +66,5 @@ movebank_gyro_colsets()
 }
 \seealso{
 \code{\link[=active_acc_colsets]{active_acc_colsets()}}, \code{\link[=active_mag_colsets]{active_mag_colsets()}}, \code{\link[=active_gyro_colsets]{active_gyro_colsets()}}
-to identify column sets present in a given \code{move2} object.
+to identify column sets present in a tabular data source.
 }

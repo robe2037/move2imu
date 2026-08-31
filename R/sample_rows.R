@@ -1,10 +1,10 @@
-#' Identify rows in a `move2` that contain IMU data
+#' Identify rows containing IMU data
 #'
 #' @description
 #' These functions return a logical vector flagging the rows of an input
-#' `move2` object that contain sample data for the specified sensor. These are
-#' the rows that will be used to build IMU bursts when calling `as_acc()`, 
-#' `as_mag()`, or `as_gyro()`.
+#' `move2` or `data.frame` that contain sample data for the specified sensor.
+#' These are the rows that will be used to build IMU bursts when calling
+#' `as_acc()`, `as_mag()`, or `as_gyro()`.
 #'
 #' @details
 #' If `x` has data in more than one active IMU column set, `*_sample_rows()`
@@ -13,7 +13,7 @@
 #' `*_sample_rows()` only considers certain column sets, use the `colset`
 #' argument.
 #'
-#' If no active colset is detected (e.g. a `move2` with only GPS data),
+#' If no active colset is detected (e.g. data with only GPS records),
 #' `*_sample_rows()` returns `FALSE` for all rows.
 #'
 #' For expanded-format data (where multiple rows compose a single burst)
@@ -21,7 +21,7 @@
 #' of `as_*()` will not necessarily return bursts at each of these locations,
 #' as multiple of these rows will be combined into a single burst.
 #'
-#' @param x A `move2` object.
+#' @param x A `move2` or `data.frame`.
 #' @param colset An `imu_colset` object or list of `imu_colset` objects
 #'   specifying the columns to check for IMU data. By default, all active
 #'   colsets detected in `x` are considered (see [active_acc_colsets()]).
@@ -30,14 +30,14 @@
 #'   indicate rows where IMU data is present under at least one active colset.
 #'
 #' @seealso [as_acc()], [as_mag()], [as_gyro()] to extract IMU data from a
-#'   `move2` object.
+#'   `move2` or `data.frame`.
 #'
 #'   [active_acc_colsets()], [active_mag_colsets()], [active_gyro_colsets()]
 #'   to inspect which colsets are detected in `x`.
 #'
 #' @name sample_rows
 #'
-#' @examples
+#' @examplesIf rlang::is_installed("move2")
 #' alb <- albatrosses()
 #'
 #' head(acc_sample_rows(alb))

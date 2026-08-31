@@ -36,7 +36,8 @@ remotes::install_github("move2universe/move2imu")
 
 ## Usage
 
-Extract and standardize IMU bursts from a data source:
+Extract and standardize IMU bursts from a `move2` object or a
+`data.frame`:
 
 ``` r
 library(move2imu)

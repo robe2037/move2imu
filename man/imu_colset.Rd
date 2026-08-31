@@ -2,7 +2,7 @@
 % Please edit documentation in R/colsets.R
 \name{imu_colset}
 \alias{imu_colset}
-\title{Specify IMU data columns present in a \code{move2} object}
+\title{Specify IMU data columns present in a tabular data source}
 \usage{
 imu_colset(
   x = NULL,
@@ -28,11 +28,11 @@ frequency for each burst.}
 An \code{imu_colset} object of type \code{"expanded"} or \code{"compact"}.
 }
 \description{
-Define which columns in a \code{move2} object contain IMU data. Pass the
-result as the \code{colset} argument of \code{\link[=as_acc]{as_acc()}}, \code{\link[=as_mag]{as_mag()}}, or \code{\link[=as_gyro]{as_gyro()}}
-to convert those columns into an IMU vector.
+Define which columns in a \code{move2} or \code{data.frame}
+contain IMU data. Pass the result as the \code{colset} argument of \code{\link[=as_acc]{as_acc()}},
+\code{\link[=as_mag]{as_mag()}}, or \code{\link[=as_gyro]{as_gyro()}} to convert those columns into an IMU vector.
 
-\code{move2} objects store IMU data in two ways:
+IMU data are stored in two ways:
 \itemize{
 \item \strong{Expanded-format} columns store each IMU sample (possibly for multiple axes)
 in its own row.
@@ -51,15 +51,17 @@ imu_colset(x = "my_x", y = "my_y")
 # Compact-format: all three columns required
 imu_colset(bursts = "my_raw", axes = "my_axes", frequency = "my_freq")
 
+\dontshow{if (rlang::is_installed("move2")) withAutoprint(\{ # examplesIf}
 # Use a colset to extract IMU data from those columns in a move2 object
 as_acc(gulls(), colset = imu_colset(x = "acceleration_raw_x"))
+\dontshow{\}) # examplesIf}
 }
 \seealso{
-\code{\link[=as_acc]{as_acc()}}, \code{\link[=as_mag]{as_mag()}}, \code{\link[=as_gyro]{as_gyro()}} to extract IMU data from a move2
-object.
+\code{\link[=as_acc]{as_acc()}}, \code{\link[=as_mag]{as_mag()}}, \code{\link[=as_gyro]{as_gyro()}} to extract IMU data from a
+tabular data source.
 
 \code{\link[=active_acc_colsets]{active_acc_colsets()}}, \code{\link[=active_mag_colsets]{active_mag_colsets()}}, \code{\link[=active_gyro_colsets]{active_gyro_colsets()}} to
-identify IMU colsets present in a move2 object.
+identify IMU colsets present in a tabular data source.
 
 \code{\link[=movebank_acc_colsets]{movebank_acc_colsets()}}, \code{\link[=movebank_mag_colsets]{movebank_mag_colsets()}}, \code{\link[=movebank_gyro_colsets]{movebank_gyro_colsets()}}
 to see column sets provided by Movebank.

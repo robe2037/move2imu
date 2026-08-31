@@ -41,7 +41,7 @@
 #' plot_imu_trace(acc_example()) |>
 #'   dygraphs::dyOptions(useDataTimezone = TRUE)
 plot_imu_trace <- function(x, ...) {
-  rlang::check_installed(c("dygraphs", "dplyr"))
+  rlang::check_installed("dygraphs")
 
   time <- starts(x)
   freq <- freqs(x)
@@ -81,11 +81,10 @@ plot_imu_trace <- function(x, ...) {
     SIMPLIFY = FALSE
   )
 
-  df <- dplyr::bind_cols(
+  # Use vctrs to build data.frame to avoid dplyr dependency
+  df <- vec_cbind(
     time = do.call("c", mapply("+", time[keep], dt, SIMPLIFY = FALSE)),
-    dplyr::bind_rows(
-      lapply(bursts(x)[keep], function(x) rbind(data.frame(x), NA))
-    )
+    vec_rbind(!!!lapply(bursts(x)[keep], function(x) rbind(data.frame(x), NA)))
   )
 
   dygraphs::dygraph(df, ...)

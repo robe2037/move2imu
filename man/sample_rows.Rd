@@ -5,7 +5,7 @@
 \alias{acc_sample_rows}
 \alias{mag_sample_rows}
 \alias{gyro_sample_rows}
-\title{Identify rows in a \code{move2} that contain IMU data}
+\title{Identify rows containing IMU data}
 \usage{
 acc_sample_rows(x, colset = NULL)
 
@@ -14,7 +14,7 @@ mag_sample_rows(x, colset = NULL)
 gyro_sample_rows(x, colset = NULL)
 }
 \arguments{
-\item{x}{A \code{move2} object.}
+\item{x}{A \code{move2} or \code{data.frame}.}
 
 \item{colset}{An \code{imu_colset} object or list of \code{imu_colset} objects
 specifying the columns to check for IMU data. By default, all active
@@ -26,9 +26,9 @@ indicate rows where IMU data is present under at least one active colset.
 }
 \description{
 These functions return a logical vector flagging the rows of an input
-\code{move2} object that contain sample data for the specified sensor. These are
-the rows that will be used to build IMU bursts when calling \code{as_acc()},
-\code{as_mag()}, or \code{as_gyro()}.
+\code{move2} or \code{data.frame} that contain sample data for the specified sensor.
+These are the rows that will be used to build IMU bursts when calling
+\code{as_acc()}, \code{as_mag()}, or \code{as_gyro()}.
 }
 \details{
 If \code{x} has data in more than one active IMU column set, \verb{*_sample_rows()}
@@ -37,7 +37,7 @@ will return \code{TRUE}. However, these rows cannot be parsed by \code{\link[=as
 \verb{*_sample_rows()} only considers certain column sets, use the \code{colset}
 argument.
 
-If no active colset is detected (e.g. a \code{move2} with only GPS data),
+If no active colset is detected (e.g. data with only GPS records),
 \verb{*_sample_rows()} returns \code{FALSE} for all rows.
 
 For expanded-format data (where multiple rows compose a single burst)
@@ -46,16 +46,18 @@ of \verb{as_*()} will not necessarily return bursts at each of these locations,
 as multiple of these rows will be combined into a single burst.
 }
 \examples{
+\dontshow{if (rlang::is_installed("move2")) withAutoprint(\{ # examplesIf}
 alb <- albatrosses()
 
 head(acc_sample_rows(alb))
 
 # Filter to rows with acc data without building bursts
 nrow(alb[acc_sample_rows(alb), ])
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 \code{\link[=as_acc]{as_acc()}}, \code{\link[=as_mag]{as_mag()}}, \code{\link[=as_gyro]{as_gyro()}} to extract IMU data from a
-\code{move2} object.
+\code{move2} or \code{data.frame}.
 
 \code{\link[=active_acc_colsets]{active_acc_colsets()}}, \code{\link[=active_mag_colsets]{active_mag_colsets()}}, \code{\link[=active_gyro_colsets]{active_gyro_colsets()}}
 to inspect which colsets are detected in \code{x}.

@@ -5,7 +5,7 @@
 \alias{duplicated_acc_rows}
 \alias{duplicated_mag_rows}
 \alias{duplicated_gyro_rows}
-\title{Identify rows of a \code{move2} object with multiple sources of IMU data}
+\title{Identify data rows with multiple sources of IMU data}
 \usage{
 duplicated_acc_rows(x, colsets = NULL)
 
@@ -14,7 +14,7 @@ duplicated_mag_rows(x, colsets = NULL)
 duplicated_gyro_rows(x, colsets = NULL)
 }
 \arguments{
-\item{x}{A \code{move2} object.}
+\item{x}{A \code{move2} or \code{data.frame}.}
 
 \item{colsets}{A list of \code{imu_colset} objects to check for overlap. Defaults
 to the column sets detected by the corresponding \verb{active_*_colsets()}.}
@@ -25,9 +25,9 @@ rows that contain multiple sources of IMU data across the indicated
 column sets.
 }
 \description{
-Return a logical vector flagging rows of a \code{move2} object where more than
-one column set for a given sensor contains data. Functions that extract IMU
-data will error if a single timestamp contains multiple sources of IMU data
+Return a logical vector flagging rows of a \code{move2} or \code{data.frame} where more
+than one column set for a given sensor contains data. Functions that extract
+IMU data will error if a single row contains multiple sources of IMU data
 for the same sensor.
 
 To resolve duplicated rows, pass a specific set of IMU columns to the
@@ -40,10 +40,10 @@ To resolve duplicated rows, pass a specific set of IMU columns to the
 }
 \seealso{
 \code{\link[=active_acc_colsets]{active_acc_colsets()}}, \code{\link[=active_mag_colsets]{active_mag_colsets()}},
-\code{\link[=active_gyro_colsets]{active_gyro_colsets()}} to identify available column sets in a \code{move2}
-object.
+\code{\link[=active_gyro_colsets]{active_gyro_colsets()}} to identify available column sets in a
+tabular data source.
 
 \code{\link[=as_acc]{as_acc()}}, \code{\link[=as_mag]{as_mag()}}, \code{\link[=as_gyro]{as_gyro()}} to extract IMU data from a
-\code{move2} object.
+tabular data source.
 }
 \keyword{internal}

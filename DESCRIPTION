@@ -1,17 +1,18 @@
 Package: move2imu
 Type: Package
-Title: Handling Bursted IMU Data
+Title: Handling IMU Data from Animal-Borne Tags
 Version: 0.1.0
 Authors@R: c(
     person("Bart", "Kranstauber", , "b.kranstauber@uva.nl", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-8303-780X")),
     person("Finn", "Roberts", , "froberts@ab.mpg.de", role = "aut")
   )
-Description: Standardized vector representation of bursted
-    inertial measurement unit (IMU) data collected by animal tracking
+Description: Unified vector representation of
+    inertial measurement unit (IMU) data collected by animal-borne tracking
     devices, including accelerometer, magnetometer, and gyroscope sensors.
-    Extract and manipulate IMU data from move2 objects and tracking data stored
-    in Movebank.
+    Extract, calibrate, visualize, and manipulate bursts of IMU data. Integrate
+    IMU workflows directly with 'move2' trajectories and data stored in
+    'Movebank' <https://www.movebank.org/cms/movebank-main>.
 License: GPL (>= 3)
 Encoding: UTF-8
 Imports:

@@ -15,9 +15,10 @@ reference:
   - plot_imu_trace
   - plot_sampling_effort
 
-- title: Extracting IMU data from move2 / Movebank
+- title: Extracting IMU data
   desc: >
-    Identify IMU data in a `move2` object and extract into an IMU vector.
+    Identify IMU data in a `move2` or `data.frame` and extract into an IMU
+    vector.
   contents:
   - as_acc
   - as_gyro

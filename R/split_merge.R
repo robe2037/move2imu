@@ -21,12 +21,12 @@
 #' impacts the derived output frequency of the new burst. If the `gap_tol` is
 #' set to allow any timestamp noise, the gap between the two bursts may not
 #' precisely correspond with the sampling periods of the bursts being merged.
-#' In these cases, the recorded output frequency of the merged burst will 
+#' In these cases, the recorded output frequency of the merged burst will
 #' vary slightly from the values of its component bursts.
-#' 
+#'
 #' This approach preserves overall burst time span at the expense of preserving
 #' a consistent burst frequency. If you instead prefer to preserve frequency,
-#' you will need to manually adjust the frequency of the 
+#' you will need to manually adjust the frequency of the
 #' output burst (see [freqs()]) or correct timestamps in the input data.
 #'
 #' Bursts with missing frequencies (e.g. a burst with only one sample)
@@ -51,12 +51,12 @@
 #'   For example, setting `gap_tol = 0.02` would allow a burst that starts up
 #'   to 0.02 seconds after the end of the previous burst to be merged. See
 #'   details.
-#' @param freq_tol Relative tolerance to use when determining whether two bursts
-#'   share a sampling frequency. Bursts can only be merged if their
-#'   frequencies are consistent, within `freq_tol`. Bursts can be merged when
-#'   the faster frequency is at most `(1 + freq_tol)` times the slower.
-#'   For example, `freq_tol = 0.01` merges bursts whose frequencies
-#'   are within 1% of each other.
+#' @param freq_tol Bare numeric value representing the relative tolerance to use
+#'   when determining whether two bursts share a sampling frequency. Bursts can
+#'   only be merged if their frequencies are consistent, within `freq_tol`.
+#'   Bursts can be merged when the faster frequency is at most `(1 + freq_tol)`
+#'   times the slower. For example, `freq_tol = 0.01` merges bursts whose
+#'   frequencies are within 1% of each other.
 #' @param drop Logical indicating whether to drop entries that have been merged
 #'   into other bursts. If `drop = FALSE` (default), the output will have the
 #'   same length as the input `x`, with `NA` values at positions where bursts
@@ -94,9 +94,7 @@ merge_imu <- function(x,
     cli::cli_abort("{.arg gap_tol} must be greater than or equal to 0.")
   }
 
-  if (as.numeric(freq_tol) < 0) {
-    cli::cli_abort("{.arg freq_tol} must be greater than or equal to 0.")
-  }
+  check_freq_tol(freq_tol)
 
   # Work only with non-NA entries; track their original positions
   valid <- which(!is.na(x))
@@ -254,7 +252,7 @@ merge_imu <- function(x,
 #' Split the bursts in an IMU vector into bursts of a given time
 #' duration. The result is a list of vectors of the same length as the input,
 #' with the same class as `x`.
-#' 
+#'
 #' @details
 #' Bursts with `NA` frequency will not be split, as a burst duration can't
 #' be derived. In these cases, the burst is returned unchanged.

@@ -372,14 +372,14 @@ test_that("burst_intervals skips missing bursts", {
 
 test_that("burst_intervals does not skip bursts with missing metadata", {
   m <- cbind(X = 1:20, Y = 1:20, Z = 1:20)
-  
+
   # Burst with one entry with no frequency
   a <- acc(
     list(m, m, m),
     frequency = units::as_units(c(20, NA, 20), "Hz"),
     start = as.POSIXct("2020-01-01", tz = "UTC") + c(0, 60, 120)
   )
-  
+
   expect_equal(
     burst_intervals(a, from = "start"),
     units::set_units(c(NA, 60, 60), "s")
@@ -388,7 +388,7 @@ test_that("burst_intervals does not skip bursts with missing metadata", {
     burst_intervals(a, from = "end"),
     units::set_units(c(NA, 59, NA), "s")
   )
-  
+
   # Burst with one entry with no start
   a <- acc(
     list(m, m, m, m),
@@ -398,7 +398,7 @@ test_that("burst_intervals does not skip bursts with missing metadata", {
       tz = "UTC"
     )
   )
-  
+
   expect_equal(
     burst_intervals(a, from = "start"),
     units::set_units(c(NA, NA, NA, 60), "s")

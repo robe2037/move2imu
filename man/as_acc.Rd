@@ -4,6 +4,7 @@
 \alias{as_acc}
 \alias{as_acc.default}
 \alias{as_acc.move2}
+\alias{as_acc.data.frame}
 \title{Convert an object to an \code{acc} vector}
 \usage{
 as_acc(x, ...)
@@ -20,13 +21,26 @@ as_acc(x, ...)
   drop = FALSE,
   ...
 )
+
+\method{as_acc}{data.frame}(
+  x,
+  timestamp,
+  track_id,
+  colset = NULL,
+  min_freq = 0,
+  freq_tol = 0.01,
+  gap_tol = 1e-06,
+  merge_continuous = TRUE,
+  drop = FALSE,
+  ...
+)
 }
 \arguments{
-\item{x}{A \code{move2} object containing acceleration data. Typically this will
-be loaded from disk with \code{\link[move2:mt_read]{move2::mt_read()}} or downloaded using
-\code{\link[move2:movebank_download_study]{move2::movebank_download_study()}}.}
+\item{x}{A \code{move2} or \code{data.frame} containing acceleration data. A \code{move2}
+will typically be loaded from disk with \code{\link[move2:mt_read]{move2::mt_read()}} or downloaded
+using \code{\link[move2:movebank_download_study]{move2::movebank_download_study()}}.}
 
-\item{...}{currently not used}
+\item{...}{These dots are for future extensions and must be empty.}
 
 \item{colset}{An \code{imu_colset} object or list of \code{imu_colset} objects
 specifying the columns of \code{x} that contain acceleration data. By default,
@@ -48,12 +62,12 @@ Inputs with compatible \link[units:units]{units} are converted to Hz
 internally. If no units are specified, \code{min_freq} is assumed to
 be in Hz.}
 
-\item{freq_tol}{Relative tolerance to use when detecting differences in
-sampling frequency when building or merging bursts. This determines how
-much two sampling frequencies may differ before they're treated as
-belonging to separate sampling regimes. Two frequencies belong to
-the same burst when the faster is at most \code{(1 + freq_tol)} times the
-slower. For example, \code{freq_tol = 0.01} keeps frequencies that
+\item{freq_tol}{Bare numeric value specifying the relative tolerance to use
+when detecting differences in sampling frequency when building or merging
+bursts. This determines how much two sampling frequencies may differ before
+they're treated as belonging to separate sampling regimes. Two frequencies
+belong to the same burst when the faster is at most \code{(1 + freq_tol)} times
+the slower. For example, \code{freq_tol = 0.01} keeps frequencies that
 are within 1\% of each other in the same burst.
 
 Increase this value to prevent small deviations in sample timing
@@ -80,15 +94,29 @@ be dropped from the output. If \code{drop = FALSE}, then the length of the
 output will match the number of rows in the input data \code{x} and
 bursts will be stored at the index location corresponding to the start time
 of the burst.}
+
+\item{timestamp}{When \code{x} is a \code{data.frame}, a vector of timestamps
+corresponding to the recording time of each row of \code{x}.
+
+Accepts \code{POSIXct}, \code{POSIXlt}, \code{Date}, or numeric values. \code{Date} objects
+are treated as being recorded at midnight, UTC. Numeric values are
+interpreted as the number of seconds since \verb{1970-01-01 00:00:00 UTC}.
+Inputs are all converted to \code{POSIXct}.}
+
+\item{track_id}{When \code{x} is a \code{data.frame}, a vector of IDs identifying the
+track (or other grouping variable) for each row in \code{x}. Bursts are never
+built across tracks, and adjacent bursts are only merged within a track.
+
+Provide \code{NULL} to indicate that all rows belong to the same track.}
 }
 \value{
 An object of class \code{acc} inheriting from class \code{imu}.
 }
 \description{
-Extract \code{acc} data from a \code{move2} or convert an object to an \code{acc} vector.
+Extract acceleration data from a \code{move2} or \code{data.frame} and convert to an
+\code{acc} vector.
 
-For a \code{move2}, \code{acc} data are extracted from the object's
-\code{\link[=active_acc_colsets]{active_acc_colsets()}}.
+Data are extracted from the object's \code{\link[=active_acc_colsets]{active_acc_colsets()}}.
 }
 \details{
 By default (\code{drop = FALSE}), the output vector will be the same length
@@ -98,16 +126,17 @@ be represented in a single row in the output (corresponding to the start
 timestamp of the burst).
 \subsection{Input requirements}{
 
-\verb{as_*()} functions require that the input \code{move2} object be sorted by track
-and strictly increasing in time. Duplicate timestamps within a single
-track must be resolved before calling \verb{as_*()}. See
+\verb{as_*()} functions require that the input be sorted by track and strictly
+increasing in time. Duplicate timestamps within a single track must be
+resolved before calling \verb{as_*()}. For \code{move2} inputs, see
 \code{\link[move2:mt_is_track_id_cleaved]{move2::mt_is_track_id_cleaved()}}, \code{\link[move2:mt_is_time_ordered]{move2::mt_is_time_ordered()}}, and
-\code{\link[move2:mt_filter_unique]{move2::mt_filter_unique()}} for help diagnosing issues with data organization.
+\code{\link[move2:mt_filter_unique]{move2::mt_filter_unique()}} for help diagnosing issues with data
+organization.
 }
 
 \subsection{Dealing with noise in recorded timestamps}{
 
-Noise in the recorded timestamps of an input \code{move2} object can disrupt the
+Noise in the recorded timestamps of the input data can disrupt the
 correct identification of the IMU bursts identified by \verb{as_*()}.
 \itemize{
 \item For data stored in expanded format, \verb{as_*()} must derive the implied sampling
@@ -174,10 +203,27 @@ set the values slightly above your desired output tolerance.
 }
 }
 \examples{
+# Acceleration samples stored one per row. For a `data.frame`, the timestamp
+# and track ID of each row are supplied separately.
+d <- data.frame(
+  acceleration_x = c(1, 2, 3, 4),
+  acceleration_y = c(5, 6, 7, 8),
+  acceleration_z = c(9, 10, 11, 12),
+  timestamp = as.POSIXct("2024-01-01", tz = "UTC") + seq(0, 0.3, by = 0.1),
+  id = "tag_1"
+)
+
+# The samples become one 10 Hz burst, placed at the row where it starts
+as_acc(d, timestamp = d$timestamp, track_id = d$id)
+
+# Pass `track_id = NULL` when every row belongs to the same track
+as_acc(d, timestamp = d$timestamp, track_id = NULL)
+
 \dontshow{if (rlang::is_installed("move2")) withAutoprint(\{ # examplesIf}
-# Example compact-format data: acc bursts stored in strings in individual rows
+# Example move2 compact-format data: acc bursts stored in strings in individual rows
 alb <- albatrosses()
 
+# move2 objects provide timestamp and track ID metadata automatically.
 as_acc(alb)
 
 # Expanded-format data: bursts are constructed from samples stored across rows
@@ -196,6 +242,17 @@ g$a <- as_acc(g)
 
 # To instead drop missing bursts, set `drop = TRUE`:
 as_acc(g, drop = TRUE)
+
+# If extracting IMU data from a data.frame, you must separately provide
+# each record's timestamp and track ID
+alb_df <- as.data.frame(alb)
+
+as_acc(
+  alb_df,
+  timestamp = alb_df$timestamp,
+  track_id = alb_df$individual_local_identifier,
+  drop = TRUE
+)
 \dontshow{\}) # examplesIf}
 }
 \seealso{

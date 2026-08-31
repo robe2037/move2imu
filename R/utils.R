@@ -44,6 +44,27 @@ is_timestamp <- function(x) {
     (is.numeric(x) && !inherits(x, c("difftime", "units")))
 }
 
+# `freq_tol` is a relative tolerance, so it should not have units. But alongside
+# other tolerance arguments that do take units this may be a source of user
+# error. Simple guard to avoid this potential confusion.
+check_freq_tol <- function(freq_tol, call = rlang::caller_env()) {
+  if (inherits(freq_tol, "units")) {
+    cli::cli_abort(
+      "{.arg freq_tol} must be a bare numeric value, not a {.cls units} object.",
+      call = call
+    )
+  }
+
+  if (as.numeric(freq_tol) < 0) {
+    cli::cli_abort(
+      "{.arg freq_tol} must be greater than or equal to 0.",
+      call = call
+    )
+  }
+
+  invisible(NULL)
+}
+
 timestamp_to_POSIXct <- function(x,
                                  arg = rlang::caller_arg(x),
                                  call = rlang::caller_env()) {
@@ -68,8 +89,7 @@ timestamp_to_POSIXct <- function(x,
     cli::cli_abort(
       c(
         "{.arg {arg}} must be a timestamp, not {.cls {class(x)[1]}}.",
-        "i" = "Supply a {.cls POSIXct}, {.cls POSIXlt}, {.cls Date}, or a
-               number of seconds since 1970-01-01 UTC."
+        "i" = "Supply a {.cls POSIXct}, {.cls POSIXlt}, {.cls Date}, or a bare numeric value."
       ),
       call = call
     )

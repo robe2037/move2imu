@@ -1,13 +1,13 @@
 # Colset constructor -----------------------------------------------------------
 
-#' Specify IMU data columns present in a `move2` object
+#' Specify IMU data columns present in a tabular data source
 #'
 #' @description
-#' Define which columns in a `move2` object contain IMU data. Pass the
-#' result as the `colset` argument of [as_acc()], [as_mag()], or [as_gyro()]
-#' to convert those columns into an IMU vector.
+#' Define which columns in a `move2` or `data.frame`
+#' contain IMU data. Pass the result as the `colset` argument of [as_acc()],
+#' [as_mag()], or [as_gyro()] to convert those columns into an IMU vector.
 #'
-#' `move2` objects store IMU data in two ways:
+#' IMU data are stored in two ways:
 #'
 #' - **Expanded-format** columns store each IMU sample (possibly for multiple axes)
 #'   in its own row.
@@ -27,11 +27,11 @@
 #'
 #' @returns An `imu_colset` object of type `"expanded"` or `"compact"`.
 #'
-#' @seealso [as_acc()], [as_mag()], [as_gyro()] to extract IMU data from a move2
-#'   object.
+#' @seealso [as_acc()], [as_mag()], [as_gyro()] to extract IMU data from a
+#'   tabular data source.
 #'
 #'   [active_acc_colsets()], [active_mag_colsets()], [active_gyro_colsets()] to
-#'   identify IMU colsets present in a move2 object.
+#'   identify IMU colsets present in a tabular data source.
 #'
 #'   [movebank_acc_colsets()], [movebank_mag_colsets()], [movebank_gyro_colsets()]
 #'   to see column sets provided by Movebank.
@@ -46,6 +46,7 @@
 #' # Compact-format: all three columns required
 #' imu_colset(bursts = "my_raw", axes = "my_axes", frequency = "my_freq")
 #'
+#' @examplesIf rlang::is_installed("move2")
 #' # Use a colset to extract IMU data from those columns in a move2 object
 #' as_acc(gulls(), colset = imu_colset(x = "acceleration_raw_x"))
 imu_colset <- function(x = NULL,
@@ -106,18 +107,18 @@ print.imu_colset <- function(x, ...) {
 #' @description
 #' Movebank has several standard ways to store data for each IMU sensor. These
 #' functions show the recognized columns for each sensor that can be extracted
-#' from a `move2` object by default.
+#' from a `move2` or `data.frame` by default.
 #'
 #' - `movebank_acc_colsets()` — standard column sets for [as_acc()].
 #' - `movebank_mag_colsets()` — standard column sets for [as_mag()].
 #' - `movebank_gyro_colsets()` — standard column sets for [as_gyro()].
 #'
-#' To extract IMU data from a `move2` with column names that don't correspond to
+#' To extract IMU data from columns whose names don't correspond to
 #' Movebank's conventions, provide a custom set of IMU columns with
 #' [imu_colset()].
 #'
 #' @details
-#' `move2` objects store IMU data in two ways:
+#' IMU data are stored in two ways:
 #'
 #' - **Expanded-format** columns store each IMU sample (possibly for multiple axes)
 #'   in its own row.
@@ -129,15 +130,15 @@ print.imu_colset <- function(x, ...) {
 #'   of these columns must be present to form a valid compact-format column set.
 #'
 #' ## Alternate column name separators
-#' 
-#' Some column names may differ depending on how the data were downloaded. 
+#'
+#' Some column names may differ depending on how the data were downloaded.
 #' The Movebank API (e.g. `move2::movebank_download_study()`) provides columns
 #' with `_` separators, while manually downloaded data uses `:` and `-`
-#' separators and occasionally includes additional prefixes. For full 
-#' compatibility, the `active_*_colsets()` functions recognize these alternate 
+#' separators and occasionally includes additional prefixes. For full
+#' compatibility, the `active_*_colsets()` functions recognize these alternate
 #' spellings as additional column sets even though `movebank_*_colsets()` lists
 #' only the standard API names.
-#' 
+#'
 #' For future compatibility, consider converting data with
 #' the manually-downloaded column names to use `_` separators. To use
 #' a custom column set, provide the names explicitly with
@@ -146,7 +147,7 @@ print.imu_colset <- function(x, ...) {
 #' @returns A named list of `imu_colset` objects.
 #'
 #' @seealso [active_acc_colsets()], [active_mag_colsets()], [active_gyro_colsets()]
-#'   to identify column sets present in a given `move2` object.
+#'   to identify column sets present in a tabular data source.
 #'
 #' @name movebank_colsets
 #'
@@ -201,7 +202,7 @@ movebank_alt_colsets <- function(config) {
   alt <- purrr::map(config, to_alt_colset)
 
   differs <- purrr::map2_lgl(
-    config, 
+    config,
     alt,
     function(cols, alt_cols) !identical(unclass(cols), unclass(alt_cols))
   )
@@ -211,12 +212,13 @@ movebank_alt_colsets <- function(config) {
 
 # Active colsets in a move2 object ---------------------------------------------
 
-#' Identify IMU columns present in a `move2` object
+#' Identify IMU columns present in a tabular data source
 #'
 #' @description
 #' Determine the column sets that will be used by default when extracting IMU
-#' data from a `move2` object. Column sets are processed independently, but a
-#' single `move2` may contain multiple active column sets for one IMU sensor.
+#' data from a `move2` or `data.frame`. Column sets are processed
+#' independently, but a single source may contain multiple active column sets
+#' for one IMU sensor.
 #'
 #' - `active_acc_colsets()` — column sets used by [as_acc()].
 #' - `active_mag_colsets()` — column sets used by [as_mag()].
@@ -225,7 +227,7 @@ movebank_alt_colsets <- function(config) {
 #' If no active colsets are found, you can use [imu_colset()] to specify
 #' a custom set of columns that contain IMU data.
 #'
-#' @param x A `move2` object.
+#' @param x A `move2` or `data.frame`.
 #'
 #' @returns A list of `imu_colset` objects.
 #'
@@ -237,9 +239,9 @@ movebank_alt_colsets <- function(config) {
 #'   [movebank_gyro_colsets()] for the supported default colsets.
 #'
 #'   [as_acc()], [as_mag()], [as_gyro()] to extract IMU data from a
-#'   `move2` object.
+#'   tabular data source.
 #'
-#' @examples
+#' @examplesIf rlang::is_installed("move2")
 #' active_acc_colsets(albatrosses())
 #'
 #' # Multiple colsets may be available
@@ -283,7 +285,7 @@ active_gyro_colsets <- function(x) {
 
 active_colsets_ <- function(x, sensor) {
   force(x)
-  
+
   config <- switch(sensor,
     acc = movebank_acc_colsets(),
     mag = movebank_mag_colsets(),
@@ -306,12 +308,12 @@ active_colsets_ <- function(x, sensor) {
   colsets
 }
 
-#' Identify rows of a `move2` object with multiple sources of IMU data
+#' Identify data rows with multiple sources of IMU data
 #'
 #' @description
-#' Return a logical vector flagging rows of a `move2` object where more than
-#' one column set for a given sensor contains data. Functions that extract IMU
-#' data will error if a single timestamp contains multiple sources of IMU data
+#' Return a logical vector flagging rows of a `move2` or `data.frame` where more
+#' than one column set for a given sensor contains data. Functions that extract
+#' IMU data will error if a single row contains multiple sources of IMU data
 #' for the same sensor.
 #'
 #' To resolve duplicated rows, pass a specific set of IMU columns to the
@@ -321,7 +323,7 @@ active_colsets_ <- function(x, sensor) {
 #' - `duplicated_mag_rows()` — checks magnetometer column sets used by [as_mag()].
 #' - `duplicated_gyro_rows()` — checks gyroscope column sets used by [as_gyro()].
 #'
-#' @param x A `move2` object.
+#' @param x A `move2` or `data.frame`.
 #' @param colsets A list of `imu_colset` objects to check for overlap. Defaults
 #'   to the column sets detected by the corresponding `active_*_colsets()`.
 #'
@@ -334,11 +336,11 @@ active_colsets_ <- function(x, sensor) {
 #' @keywords internal
 #'
 #' @seealso [active_acc_colsets()], [active_mag_colsets()],
-#'   [active_gyro_colsets()] to identify available column sets in a `move2`
-#'   object.
+#'   [active_gyro_colsets()] to identify available column sets in a
+#'   tabular data source.
 #'
 #'   [as_acc()], [as_mag()], [as_gyro()] to extract IMU data from a
-#'   `move2` object.
+#'   tabular data source.
 NULL
 
 #' @export
@@ -524,25 +526,7 @@ gyro_colset_xyz <- function() {
 
 # Colset predicates (S3, dispatched on format subclass) ------------------------
 
-# Determine if a colset is equivalent to another vector of character cols
-# Compact colsets require all columns present to be equivalent.
-# Expanded colsets are still considered equivalent even if only a subset
-# of axis cols is provided.
-colset_equal <- function(colset, cols) {
-  UseMethod("colset_equal")
-}
-
-#' @export
-colset_equal.imu_colset_compact <- function(colset, cols) {
-  is_unique_named_subset(cols, colset) && length(cols) == length(colset)
-}
-
-#' @export
-colset_equal.imu_colset_expanded <- function(colset, cols) {
-  is_unique_named_subset(cols, colset)
-}
-
-# Determine whether a colset is "active" in a move2 object `x`. Active colsets
+# Determine whether a colset is "active" in `x`. Active colsets
 # are present and contain data in all necessary columns. Compact colsets
 # require all columns in the set to be present and contain data. Expanded
 # colsets only require a subset of the columns to be present and have data.
@@ -583,7 +567,7 @@ colset_active.imu_colset_expanded <- function(colset, x) {
 
 # Convert Movebank API column names to their manual-download equivalent.
 # This includes updating underscores to `-` and `:` where appropriate and
-# reinstating the `mag:` prefix for magnetometer columns. This is the inverse 
+# reinstating the `mag:` prefix for magnetometer columns. This is the inverse
 # of `to_download_names()` from move2, restricted to the IMU columns we support.
 #
 # This allows us to detect and parse manually-downloaded IMU cols alongside
@@ -600,22 +584,6 @@ to_alt_colset <- function(colset) {
     rlang::set_names(to_alt_names(unclass(colset)), names(colset)),
     type = colset_type(colset)
   )
-}
-
-# Determine if a colset is the eobs acc colset in either its API or alternate 
-# spelling. We know that eobs cols from Movebank are integer ADC values, so we 
-# use this check to enforce integer values on eobs-colsets specifically.
-is_eobs_acc_colset <- function(colset) {
-  eobs <- acc_colset_eobs()
-  eobs_alt <- to_alt_colset(eobs)
-  colset_equal(eobs, colset) || colset_equal(eobs_alt, colset)
-}
-
-# Check that `x` is a non-empty, non-duplicated, name-value subset of `target`
-is_unique_named_subset <- function(x, y) {
-  length(x) > 0 &&
-    anyDuplicated(names(x)) == 0 &&
-    identical(x[names(x)], y[names(x)])
 }
 
 cols_empty <- function(x, cols) {

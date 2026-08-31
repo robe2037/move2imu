@@ -7,48 +7,20 @@ to_alt_cols <- function(x, cols) {
 }
 
 alb_alt <- function() {
-  to_alt_cols(albatrosses(), acc_colset_eobs())
+  to_alt_cols(albatrosses_df(), acc_colset_eobs())
 }
 
 gul_alt <- function() {
-  to_alt_cols(gulls(), acc_colset_raw_xyz())
+  to_alt_cols(gulls_df(), acc_colset_raw_xyz())
 }
 
-test_that("Config predicates validate colsets against supported defaults", {
-  matches_any <- function(cols, config) {
-    any(purrr::map_lgl(config, function(entry) colset_equal(entry, cols)))
-  }
-  cfg <- movebank_acc_colsets()
-
-  expect_true(matches_any(acc_colset_eobs(), cfg))
-  expect_true(matches_any(acc_colset_raw(), cfg))
-  expect_true(matches_any(acc_colset_acc(), cfg))
-  expect_true(matches_any(acc_colset_xyz(), cfg))
-  expect_true(matches_any(acc_colset_raw_xyz(), cfg))
-
-  # Compact-format acc cols must contain all listed cols
-  expect_false(matches_any(acc_colset_eobs()[1:2], cfg))
-  expect_false(matches_any(acc_colset_raw()[1], cfg))
-  expect_false(matches_any(acc_colset_acc()[1], cfg))
-
-  # Expanded-format acc cols can consist of a subset of allowable cols
-  expect_true(matches_any(acc_colset_xyz()[1:2], cfg))
-  expect_true(matches_any(acc_colset_raw_xyz()[3], cfg))
-
-  # Duplicates excluded
-  expect_false(matches_any(c(acc_colset_raw_xyz(), acc_colset_xyz()), cfg))
-  expect_false(matches_any(c(acc_colset_xyz(), acc_colset_xyz()), cfg))
-})
-
-test_that("Can find active colsets in move2 object", {
-  skip_if_not_installed("move2")
-  expect_identical(active_acc_colsets(albatrosses()), list(eobs = acc_colset_eobs()))
-  expect_identical(active_acc_colsets(gulls()), list(raw_xyz = acc_colset_raw_xyz()))
+test_that("Can find active colsets in a tabular object", {
+  expect_identical(active_acc_colsets(albatrosses_df()), list(eobs = acc_colset_eobs()))
+  expect_identical(active_acc_colsets(gulls_df()), list(raw_xyz = acc_colset_raw_xyz()))
 })
 
 test_that("Correctly subset active colsets for expanded-format acc cols", {
-  skip_if_not_installed("move2")
-  gulls_data <- gulls()
+  gulls_data <- gulls_df()
   gulls_sub <- gulls_data[, setdiff(colnames(gulls_data), "acceleration_raw_y")]
   expect_identical(
     active_acc_colsets(gulls_sub),
@@ -59,9 +31,8 @@ test_that("Correctly subset active colsets for expanded-format acc cols", {
   )
 })
 
-test_that("Can find active colsets in move2 object with multiple colsets", {
-  skip_if_not_installed("move2")
-  cols <- active_acc_colsets(move2::mt_stack(albatrosses(), gulls()))
+test_that("Can find active colsets with multiple colsets present", {
+  cols <- active_acc_colsets(vctrs::vec_rbind(albatrosses_df(), gulls_df()))
   expect_identical(
     cols,
     list(eobs = acc_colset_eobs(), raw_xyz = acc_colset_raw_xyz())
@@ -69,8 +40,7 @@ test_that("Can find active colsets in move2 object with multiple colsets", {
 })
 
 test_that("Error if no colset detected", {
-  skip_if_not_installed("move2")
-  alb_data <- albatrosses()
+  alb_data <- albatrosses_df()
 
   col_subset <- setdiff(colnames(alb_data), "eobs_acceleration_axes")
   alb_data <- alb_data[, col_subset]
@@ -82,8 +52,7 @@ test_that("Error if no colset detected", {
 })
 
 test_that("Use data values to determine active colset if multiple present", {
-  skip_if_not_installed("move2")
-  m <- move2::mt_stack(gulls(), albatrosses())
+  m <- vctrs::vec_rbind(gulls_df(), albatrosses_df())
 
   # Missing data shouldn't matter if at least one of the set still contains data
   m[["acceleration_raw_x"]] <- NA
@@ -109,8 +78,7 @@ test_that("Use data values to determine active colset if multiple present", {
 })
 
 test_that("Correctly identify that a non-full compact-format colset is invalid", {
-  skip_if_not_installed("move2")
-  alb <- albatrosses()
+  alb <- albatrosses_df()
   alb$eobs_acceleration_axes <- NA
   expect_error(active_acc_colsets(alb))
 
@@ -132,39 +100,21 @@ test_that("Currently supported colsets", {
       raw_xyz = acc_colset_raw_xyz()
     )
   )
-})
-
-test_that("is_unique_named_subset correctly identifies subsets", {
-  tgt <- acc_colset_raw_xyz()
-
-  # Exact match
-  expect_true(is_unique_named_subset(tgt, tgt))
-
-  # Valid subset
-  expect_true(is_unique_named_subset(tgt[c("X", "Z")], tgt))
-  expect_true(is_unique_named_subset(tgt["Y"], tgt))
-
-  # Superset (concatenated colsets)
-  expect_false(is_unique_named_subset(c(acc_colset_raw_xyz(), acc_colset_xyz()), tgt))
-
-  # Wrong name-value mapping (Y mapped to X's column)
-  expect_false(is_unique_named_subset(
-    imu_colset(y = "acceleration_raw_x"),
-    tgt
-  ))
-
-  # Duplicate names
-  expect_false(is_unique_named_subset(c(tgt["X"], tgt["X"]), tgt))
-
-  # Custom columns not in target
-  expect_false(is_unique_named_subset(imu_colset(x = "my_col"), tgt))
-
-  # Empty input
-  expect_false(is_unique_named_subset(character(0), tgt))
-
-  # Names are not required if not present in both
-  expect_true(is_unique_named_subset(c("A", "B"), c("A", "B", "C")))
-  expect_false(is_unique_named_subset(c("A", "B"), c(A = "A", B = "B", C = "C")))
+  expect_identical(
+    movebank_mag_colsets(),
+    list(
+      raw = mag_colset_raw(),
+      xyz = mag_colset_xyz(),
+      raw_xyz = mag_colset_raw_xyz()
+    )
+  )
+  expect_identical(
+    movebank_gyro_colsets(),
+    list(
+      raw = gyro_colset_raw(),
+      xyz = gyro_colset_xyz()
+    )
+  )
 })
 
 test_that("imu_colset() errors on invalid specifications", {
@@ -249,66 +199,54 @@ test_that("Only genuinely distinct alternate spellings are added as alt colsets"
 })
 
 test_that("Active colsets match alternate column names", {
-  skip_if_not_installed("move2")
-  
   # Compact-format (eobs): recognized as the hidden `eobs_alt` colset
   cs <- active_acc_colsets(alb_alt())
   
   expect_named(cs, "eobs_alt")
-  expect_true(
-    colset_equal(
-      cs[[1]],
-      c(
-        bursts = "eobs:accelerations-raw",
-        axes = "eobs:acceleration-axes",
-        frequency = "eobs:acceleration-sampling-frequency-per-axis"
-      )
+  expect_identical(
+    cs[[1]],
+    imu_colset(
+      bursts = "eobs:accelerations-raw",
+      axes = "eobs:acceleration-axes",
+      frequency = "eobs:acceleration-sampling-frequency-per-axis"
     )
   )
-  
+
   # Expanded-format: recognized as the hidden `raw_xyz_alt` colset
   cs <- active_acc_colsets(gul_alt())
-  
+
   expect_named(cs, "raw_xyz_alt")
-  expect_true(
-    colset_equal(
-      cs[[1]],
-      c(
-        X = "acceleration-raw-x",
-        Y = "acceleration-raw-y",
-        Z = "acceleration-raw-z"
-      )
+  expect_identical(
+    cs[[1]],
+    imu_colset(
+      x = "acceleration-raw-x",
+      y = "acceleration-raw-y",
+      z = "acceleration-raw-z"
     )
   )
 })
 
 test_that("as_acc() parses alternate names identically to canonical", {
-  skip_if_not_installed("move2")
-  
-  expect_identical(as_acc(alb_alt()), as_acc(albatrosses()))
-  expect_identical(as_acc(gul_alt()), as_acc(gulls()))
+  expect_identical(as_acc_df(alb_alt()), as_acc_df(albatrosses_df()))
+  expect_identical(as_acc_df(gul_alt()), as_acc_df(gulls_df()))
 })
 
 # Test mag as insurance since mag columns behave slightly differently with
 # their `mag:` prefix.
 test_that("Alternate names are detected and parsed for mag", {
-  skip_if_not_installed("move2")
-
   # Compact-format
   mc <- to_alt_cols(mag_example_compact(), mag_colset_raw())
   expect_named(active_mag_colsets(mc), "raw_alt")
-  expect_identical(as_mag(mc), as_mag(mag_example_compact()))
+  expect_identical(as_mag_df(mc), as_mag_df(mag_example_compact()))
 
   # Expanded-format (`mag:magnetic-field-x`, etc.)
   me <- to_alt_cols(mag_example_expanded(), mag_colset_xyz())
   expect_named(active_mag_colsets(me), "xyz_alt")
-  expect_identical(as_mag(me), as_mag(mag_example_expanded()))
+  expect_identical(as_mag_df(me), as_mag_df(mag_example_expanded()))
 })
 
 test_that("API and alternate spellings are detected as separate colsets", {
-  skip_if_not_installed("move2")
-  
-  g <- gulls()
+  g <- gulls_df()
   
   cols <- c("acceleration_raw_x", "acceleration_raw_y", "acceleration_raw_z")
   
@@ -320,9 +258,7 @@ test_that("API and alternate spellings are detected as separate colsets", {
 })
 
 test_that("Overlapping data in API and alt col names reported as duplicated rows", {
-  skip_if_not_installed("move2")
-  
-  g <- gulls()
+  g <- gulls_df()
   
   cols <- c("acceleration_raw_x", "acceleration_raw_y", "acceleration_raw_z")
   
@@ -331,13 +267,11 @@ test_that("Overlapping data in API and alt col names reported as duplicated rows
   }
   
   expect_true(any(duplicated_acc_rows(g)))
-  expect_error(suppressWarnings(as_acc(g)), "multiple sources")
+  expect_error(suppressWarnings(as_acc_df(g)), "multiple sources")
 })
 
 test_that("Explicit colsets bypass detection, in either spelling", {
-  skip_if_not_installed("move2")
-  
-  g <- gulls()
+  g <- gulls_df()
   
   cols <- c("acceleration_raw_x", "acceleration_raw_y", "acceleration_raw_z")
   
@@ -347,7 +281,7 @@ test_that("Explicit colsets bypass detection, in either spelling", {
   
   # Auto-detection would be an overlapping conflict, but naming the columns
   # explicitly works with no detection and no ambiguity, in either spelling.
-  alt_acc <- as_acc(
+  alt_acc <- as_acc_df(
     g, 
     colset = imu_colset(
       x = "acceleration-raw-x",
@@ -356,5 +290,20 @@ test_that("Explicit colsets bypass detection, in either spelling", {
     )
   )
   
-  expect_identical(alt_acc, as_acc(gulls()))
+  expect_identical(alt_acc, as_acc_df(gulls_df()))
+})
+
+test_that("Colset detection accepts a plain data.frame", {
+  # No `move2` involved: both helpers are documented for `data.frame` too
+  df <- data.frame(
+    acceleration_raw_x = c(1, NA, 1),
+    acceleration_raw_y = c(2, NA, 2),
+    acceleration_raw_z = c(3, NA, 3),
+    eobs_accelerations_raw = c(NA, "1 2 3", "1 2 3"),
+    eobs_acceleration_axes = c(NA, "XYZ", "XYZ"),
+    eobs_acceleration_sampling_frequency_per_axis = c(NA, 10, 10)
+  )
+
+  expect_named(active_acc_colsets(df), c("eobs", "raw_xyz"))
+  expect_identical(duplicated_acc_rows(df), c(FALSE, FALSE, TRUE))
 })
