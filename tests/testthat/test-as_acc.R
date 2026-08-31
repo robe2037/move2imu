@@ -78,42 +78,46 @@ test_that("Can get acc from expanded-format acc data", {
 
 test_that("Can manually specify acc columns to use for parsing", {
   cols <- acc_colset_raw_xyz()
+  g <- gulls_df()
 
-  a <- as_acc_df(gulls_df(), colset = cols)
-  i <- which_imu_vals(gulls_df(), colset = cols)
+  a <- as_acc_df(g, colset = cols)
+  i <- which_imu_vals(g, colset = cols)
 
   expect_equal(
     unlist(lapply(bursts(a), function(b) b[, 1])),
-    gulls_df()[[cols[[1]]]][i]
+    g[[cols[[1]]]][i]
   )
   expect_equal(
     unlist(lapply(bursts(a), function(b) b[, 2])),
-    gulls_df()[[cols[[2]]]][i]
+    g[[cols[[2]]]][i]
   )
   expect_equal(
     unlist(lapply(bursts(a), function(b) b[, 3])),
-    gulls_df()[[cols[[3]]]][i]
+    g[[cols[[3]]]][i]
   )
 })
 
 test_that("Can manually specify a subset of expanded-format cols", {
   col <- imu_colset(y = "acceleration_raw_y")
+  g <- gulls_df()
 
-  a <- as_acc_df(gulls_df(), colset = col)
-  i <- which_imu_vals(gulls_df(), colset = col)
+  a <- as_acc_df(g, colset = col)
+  i <- which_imu_vals(g, colset = col)
 
-  expect_equal(unlist(lapply(bursts(a), function(b) b[, 1])), gulls_df()[[as.character(col)]][i])
+  expect_equal(unlist(lapply(bursts(a), function(b) b[, 1])), g[[as.character(col)]][i])
 })
 
 test_that("Can manually specify acc columns in mixed acc type data", {
-  d <- vctrs::vec_rbind(albatrosses_df(), gulls_df())
+  alb <- albatrosses_df()
+  gul <- gulls_df()
+  d <- vctrs::vec_rbind(alb, gul)
 
   expect_identical(
-    as_acc_df(albatrosses_df(), drop = TRUE),
+    as_acc_df(alb, drop = TRUE),
     as_acc_df(d, colset = acc_colset_eobs(), drop = TRUE)
   )
   expect_identical(
-    as_acc_df(gulls_df(), colset = acc_colset_raw_xyz(), drop = TRUE),
+    as_acc_df(gul, colset = acc_colset_raw_xyz(), drop = TRUE),
     as_acc_df(d, colset = acc_colset_raw_xyz(), drop = TRUE)
   )
   expect_identical(
@@ -142,10 +146,12 @@ test_that("Error on duplicate acc rows across colsets", {
 })
 
 test_that("Automatically get all available colsets", {
-  m <- vctrs::vec_rbind(gulls_df(), albatrosses_df())
+  gul <- gulls_df()
+  alb <- albatrosses_df()
+  m <- vctrs::vec_rbind(gul, alb)
 
   expect_warning(a <- as_acc_df(m, drop = TRUE), "Detected multiple")
-  a2 <- c(as_acc_df(gulls_df(), drop = TRUE), as_acc_df(albatrosses_df(), drop = TRUE))
+  a2 <- c(as_acc_df(gul, drop = TRUE), as_acc_df(alb, drop = TRUE))
 
   # Ensure same ordering on comparison
   expect_identical(a2[order(starts(a2))], a[order(starts(a))])
@@ -189,8 +195,10 @@ test_that("Multi-colset drop = TRUE is subset of drop = FALSE", {
 })
 
 test_that("Correctly error on bad colset specifications", {
-  expect_error(as_acc_df(gulls_df(), colset = acc_colset_eobs()), "Missing columns")
-  expect_error(as_acc_df(gulls_df(), colset = "foobar"), "must be an <imu_colset>")
+  g <- gulls_df()
+
+  expect_error(as_acc_df(g, colset = acc_colset_eobs()), "Missing columns")
+  expect_error(as_acc_df(g, colset = "foobar"), "must be an <imu_colset>")
 })
 
 test_that("Error on a user-supplied colset whose columns are present but empty", {
@@ -242,10 +250,9 @@ test_that("Can use `min_freq` to avoid building bursts below freq thresh", {
 
   # If `drop = FALSE`, partitioned bursts should fill indices that were
   # previously empty, and overall vector length should stay the same.
-  expect_length(
-    as_acc_df(gulls_df(), min_freq = 40, drop = FALSE),
-    nrow(gulls_df())
-  )
+  g <- gulls_df()
+
+  expect_length(as_acc_df(g, min_freq = 40, drop = FALSE), nrow(g))
 })
 
 test_that("Can drop missing acc values", {
@@ -271,8 +278,10 @@ test_that("Can drop missing acc values", {
   )
   expect_equal(which(!is.na(acc)), sort(first_i))
 
-  acc <- as_acc_df(albatrosses_df(), drop = FALSE)
-  expect_identical(as_acc_df(albatrosses_df(), drop = TRUE), acc[!is.na(acc)])
+  alb <- albatrosses_df()
+  acc <- as_acc_df(alb, drop = FALSE)
+
+  expect_identical(as_acc_df(alb, drop = TRUE), acc[!is.na(acc)])
 })
 
 test_that("Retain burst dimensions when missing data in some axes", {
@@ -291,7 +300,7 @@ test_that("Preserve time zone", {
   expect_equal(attr(starts(acc()), "tzone"), "UTC")
   expect_equal(attr(starts(acc(acc_burst_example(), 1)), "tzone"), "UTC")
 
-  expect_equal(attr(starts(as_acc_df(albatrosses_df())), "tzone"), "UTC")
+  expect_equal(attr(starts(as_acc_df(a)), "tzone"), "UTC")
 
   a$timestamp <- 1:nrow(a)
   expect_equal(attr(starts(as_acc_df(a)), "tzone"), "UTC")
@@ -381,7 +390,7 @@ test_that("as_acc() uses column units as burst units for expanded data", {
   cols <- as.character(acc_colset_raw_xyz())
 
   g_plain <- gulls_df()
-  g_units <- gulls_df()
+  g_units <- g_plain
 
   for (col in cols) {
     g_plain[[col]] <- as.numeric(g_plain[[col]])
