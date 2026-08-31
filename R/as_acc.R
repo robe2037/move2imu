@@ -154,10 +154,28 @@
 #'
 #' @export
 #'
+#' @examples
+#' # Acceleration samples stored one per row. For a `data.frame`, the timestamp
+#' # and track ID of each row are supplied separately.
+#' d <- data.frame(
+#'   acceleration_x = c(1, 2, 3, 4),
+#'   acceleration_y = c(5, 6, 7, 8),
+#'   acceleration_z = c(9, 10, 11, 12),
+#'   timestamp = as.POSIXct("2024-01-01", tz = "UTC") + seq(0, 0.3, by = 0.1),
+#'   id = "tag_1"
+#' )
+#'
+#' # The samples become one 10 Hz burst, placed at the row where it starts
+#' as_acc(d, timestamp = d$timestamp, track_id = d$id)
+#'
+#' # Pass `track_id = NULL` when every row belongs to the same track
+#' as_acc(d, timestamp = d$timestamp, track_id = NULL)
+#'
 #' @examplesIf rlang::is_installed("move2")
-#' # Example compact-format data: acc bursts stored in strings in individual rows
+#' # Example move2 compact-format data: acc bursts stored in strings in individual rows
 #' alb <- albatrosses()
 #'
+#' # move2 objects provide timestamp and track ID metadata automatically.
 #' as_acc(alb)
 #'
 #' # Expanded-format data: bursts are constructed from samples stored across rows
