@@ -558,6 +558,10 @@ test_that("merge_imu() errors on invalid tolerances", {
 
   expect_error(merge_imu(a, gap_tol = -1), "`gap_tol` must be greater than")
   expect_error(merge_imu(a, freq_tol = -1), "`freq_tol` must be greater than")
+  expect_error(
+    merge_imu(a, freq_tol = units::set_units(1e-2, "Hz")),
+    "`freq_tol` must be a bare numeric value"
+  )
 })
 
 test_that("gap_tol bridges a small boundary glitch", {

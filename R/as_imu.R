@@ -99,9 +99,7 @@ as_imu_table <- function(x,
     cli::cli_abort("{.arg min_freq} must be greater than or equal to 0.")
   }
 
-  if (as.numeric(freq_tol) < 0) {
-    cli::cli_abort("{.arg freq_tol} must be greater than or equal to 0.")
-  }
+  check_freq_tol(freq_tol)
 
   if (as.numeric(units::set_units(gap_tol, "s")) < 0) {
     cli::cli_abort("{.arg gap_tol} must be greater than or equal to 0.")

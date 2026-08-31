@@ -40,12 +40,12 @@
 #'   Inputs with compatible [units][units::units] are converted to Hz
 #'   internally. If no units are specified, `min_freq` is assumed to
 #'   be in Hz.
-#' @param freq_tol Relative tolerance to use when detecting differences in
-#'   sampling frequency when building or merging bursts. This determines how
-#'   much two sampling frequencies may differ before they're treated as
-#'   belonging to separate sampling regimes. Two frequencies belong to
-#'   the same burst when the faster is at most `(1 + freq_tol)` times the
-#'   slower. For example, `freq_tol = 0.01` keeps frequencies that
+#' @param freq_tol Bare numeric value specifying the relative tolerance to use
+#'   when detecting differences in sampling frequency when building or merging
+#'   bursts. This determines how much two sampling frequencies may differ before
+#'   they're treated as belonging to separate sampling regimes. Two frequencies
+#'   belong to the same burst when the faster is at most `(1 + freq_tol)` times
+#'   the slower. For example, `freq_tol = 0.01` keeps frequencies that
 #'   are within 1% of each other in the same burst.
 #'
 #'   Increase this value to prevent small deviations in sample timing

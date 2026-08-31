@@ -543,6 +543,15 @@ test_that("as_acc() validates tolerances", {
     ),
     "`gap_tol` must be greater than or equal to 0"
   )
+  expect_error(
+    as_acc(
+      compact,
+      timestamp = compact$ts,
+      track_id = NULL,
+      freq_tol = units::set_units(1e-2, "Hz")
+    ),
+    "`freq_tol` must be a bare numeric value"
+  )
 
   # An input with no rows to parse is checked the same way
   expect_error(

@@ -22,12 +22,12 @@ For example, setting \code{gap_tol = 0.02} would allow a burst that starts up
 to 0.02 seconds after the end of the previous burst to be merged. See
 details.}
 
-\item{freq_tol}{Relative tolerance to use when determining whether two bursts
-share a sampling frequency. Bursts can only be merged if their
-frequencies are consistent, within \code{freq_tol}. Bursts can be merged when
-the faster frequency is at most \code{(1 + freq_tol)} times the slower.
-For example, \code{freq_tol = 0.01} merges bursts whose frequencies
-are within 1\% of each other.}
+\item{freq_tol}{Bare numeric value representing the relative tolerance to use
+when determining whether two bursts share a sampling frequency. Bursts can
+only be merged if their frequencies are consistent, within \code{freq_tol}.
+Bursts can be merged when the faster frequency is at most \code{(1 + freq_tol)}
+times the slower. For example, \code{freq_tol = 0.01} merges bursts whose
+frequencies are within 1\% of each other.}
 
 \item{drop}{Logical indicating whether to drop entries that have been merged
 into other bursts. If \code{drop = FALSE} (default), the output will have the
