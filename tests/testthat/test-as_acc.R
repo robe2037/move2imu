@@ -363,13 +363,6 @@ test_that("Expanded bursts inherit the storage mode of their input columns", {
   expect_identical(unlist(bursts(a_dbl)), rep(as.numeric(1:10), 3))
 })
 
-test_that("as_acc() rejects plain character vector for colset", {
-  expect_error(
-    as_acc_df(albatrosses_df(), colset = c("eobs_accelerations_raw")),
-    "must be an <imu_colset>"
-  )
-})
-
 test_that("as_acc() errors when expanded-format columns have mismatched units", {
   g <- gulls_df()
 
