@@ -342,6 +342,27 @@ test_that("as_acc() checks expanded-format coltypes", {
   expect_silent(as_acc_df(g, colset = imu_colset(y = "acceleration_raw_y")))
 })
 
+test_that("Expanded bursts inherit the storage mode of their input columns", {
+  t <- data.frame(
+    acceleration_x = 1:10,
+    acceleration_y = 1:10,
+    acceleration_z = 1:10,
+    ts = .as.POSIXct(seq(1, 1.9, by = 0.1))
+  )
+
+  a_int <- as_acc(t, timestamp = t$ts, track_id = NULL, drop = TRUE)
+
+  expect_identical(storage.mode(bursts(a_int)[[1]]), "integer")
+  expect_identical(unlist(bursts(a_int)), rep(1:10, 3))
+
+  t[1:3] <- lapply(t[1:3], as.double)
+
+  a_dbl <- as_acc(t, timestamp = t$ts, track_id = NULL, drop = TRUE)
+
+  expect_identical(storage.mode(bursts(a_dbl)[[1]]), "double")
+  expect_identical(unlist(bursts(a_dbl)), rep(as.numeric(1:10), 3))
+})
+
 test_that("as_acc() rejects plain character vector for colset", {
   expect_error(
     as_acc_df(albatrosses_df(), colset = c("eobs_accelerations_raw")),
@@ -497,6 +518,46 @@ test_that("freq_tol and min_freq control burst parsing (gap_tol does not)", {
   expect_length(as_acc_df(two, drop = TRUE), 2)
 })
 
+test_that("as_acc() validates tolerances", {
+  compact <- data.frame(
+    acceleration_axes = "XYZ",
+    acceleration_sampling_frequency_per_axis = 10,
+    accelerations_raw = "1 2 3 4 5 6",
+    ts = .as.POSIXct(1)
+  )
+
+  expect_error(
+    as_acc(compact, timestamp = compact$ts, track_id = NULL, min_freq = -1),
+    "`min_freq` must be greater than or equal to 0"
+  )
+  expect_error(
+    as_acc(
+      compact,
+      timestamp = compact$ts,
+      track_id = NULL,
+      freq_tol = -1,
+      merge_continuous = FALSE
+    ),
+    "`freq_tol` must be greater than or equal to 0"
+  )
+  expect_error(
+    as_acc(
+      compact,
+      timestamp = compact$ts,
+      track_id = NULL,
+      gap_tol = -1,
+      merge_continuous = FALSE
+    ),
+    "`gap_tol` must be greater than or equal to 0"
+  )
+
+  # An input with no rows to parse is checked the same way
+  expect_error(
+    as_acc(compact[0, ], timestamp = compact$ts[0], track_id = NULL, gap_tol = -1),
+    "`gap_tol` must be greater than or equal to 0"
+  )
+})
+
 test_that("duplicate timestamps within a track are rejected", {
   expect_error(
     as_acc_df(acc_example_expanded(c(0, 0, 0, 1, 2, 3))),
@@ -570,6 +631,67 @@ test_that("compact bursts must also be ordered and unique within a track", {
   expect_no_error(as_acc_df(comp))
 })
 
+test_that("tracks that are not grouped together are rejected", {
+  d <- acc_example_expanded(c(1, 2, 3, 4), id = c("a", "b", "a", "b"))
+
+  expect_error(as_acc_df(d), "Not all tracks are grouped")
+
+  d$id <- c("a", "a", "b", "b")
+  expect_s3_class(as_acc_df(d), "acc")
+})
+
+test_that("as_acc() treats NULL track_id as a single track", {
+  # Two tracks that are contiguous in time, so the only thing keeping their
+  # samples in separate bursts is the track ID.
+  d <- acc_example_expanded(seq(0, 0.5, by = 0.1), id = rep(c("a", "b"), each = 3))
+
+  per_track <- as_acc_df(d, drop = TRUE)
+  one_track <- as_acc(d, timestamp = d$timestamp, track_id = NULL, drop = TRUE)
+
+  # One burst per track, versus a single burst spanning every sample
+  expect_length(per_track, 2)
+  expect_identical(purrr::map_int(bursts(per_track), nrow), c(3L, 3L))
+
+  expect_length(one_track, 1)
+  expect_identical(nrow(bursts(one_track)[[1]]), 6L)
+
+  # A single supplied track ID is equivalent to NULL
+  expect_identical(
+    as_acc(d, timestamp = d$timestamp, track_id = rep("a", nrow(d)), drop = TRUE),
+    one_track
+  )
+})
+
+test_that("a single IMU record is parsed without ordering checks", {
+  # One row has nothing to compare against, so the ordering checks short-circuit.
+  # Expanded data cannot derive a frequency from a lone sample.
+  e <- acc_example_expanded(0)
+
+  a <- as_acc_df(e, drop = TRUE)
+
+  expect_length(a, 1)
+  expect_identical(n_samples(a), 1L)
+  expect_true(is.na(freqs(a)))
+
+  # A compact row carries its own frequency, so it parses fully
+  c1 <- as_acc_df(acc_example_compact(.as.POSIXct(0)), drop = TRUE)
+
+  expect_length(c1, 1)
+  expect_identical(n_samples(c1), 20L)
+})
+
+test_that("track IDs are compared by observed value, not declared levels", {
+  # Subsetting a factor track_id leaves its unused levels behind. Those must not
+  # be counted as tracks that the data failed to group.
+  d <- acc_example_expanded(c(1, 2, 3, 4), id = c("a", "a", "b", "b"))
+  d$id <- factor(d$id, levels = c("a", "b", "unused"))
+
+  expect_identical(
+    as_acc_df(d, drop = TRUE),
+    as_acc_df(acc_example_expanded(c(1, 2, 3, 4), id = c("a", "a", "b", "b")), drop = TRUE)
+  )
+})
+
 test_that("an empty input returns an empty vector", {
   empty <- gulls_df()[0, ]
   a <- as_acc_df(empty)
@@ -593,6 +715,44 @@ test_that("burst frequency is span-based (unbiased) for non-uniform spacing", {
   expect_equal(as.numeric(freqs(a)), signif(2 / 2.4, 6))
 })
 
+test_that("as_acc() validates timestamp and track_id for data.frame input", {
+  # Unlike the move2 method, which reads both from the object's metadata, the
+  # tabular method takes them as arguments and has to check them itself.
+  d <- acc_example_expanded(c(1, 2, 3, 4), id = c("a", "a", "b", "b"))
+
+  expect_error(as_acc(d), 'argument "timestamp" is missing')
+  expect_error(
+    as_acc(d, timestamp = d$timestamp),
+    'argument "track_id" is missing'
+  )
+  expect_no_error(as_acc(d, timestamp = as.numeric(d$timestamp), track_id = NULL))
+  # Rejected by the shared `timestamp_to_POSIXct()`, so the wording matches the
+  # one used by `acc()`/`starts<-` rather than being specific to this entry point
+  expect_error(
+    as_acc(d, timestamp = as.character(d$timestamp), track_id = NULL),
+    "must be a timestamp, not <character>"
+  )
+
+  # `units` vectors are numeric, but their unit would be silently ignored, so we
+  # don't accept them
+  expect_error(
+    as_acc(d, timestamp = units::set_units(as.numeric(d$timestamp), "s"), track_id = NULL),
+    "must be a timestamp, not <units>"
+  )
+  expect_error(
+    as_acc(d, timestamp = d$timestamp[1:2], track_id = NULL),
+    "must be the same length"
+  )
+  expect_error(
+    as_acc(d, timestamp = d$timestamp, track_id = d$id[1:2]),
+    "must be the same length"
+  )
+  expect_error(
+    as_acc(d, timestamp = d$timestamp, track_id = c("a", NA, "b", "b")),
+    "must not contain missing values"
+  )
+})
+
 test_that("as_acc() rejects unused arguments for either burst format", {
   df <- data.frame(
     acceleration_x = as.numeric(1:4),
@@ -609,20 +769,34 @@ test_that("as_acc() rejects unused arguments for either burst format", {
   )
 })
 
-test_that("Time columns that are not POSIXct are normalized", {
-  # move2 permits a `numeric`, `Date`, or `POSIXt` time column
+test_that("Timestamps that are not POSIXct are normalized", {
+  # move2 permits a `numeric`, `Date`, or `POSIXt` time column, so the tabular
+  # method accepts the same range through its `timestamp` argument.
   d <- as_acc_df(acc_example_compact(as.Date(c("2020-01-01", "2020-01-02"))))
   expect_identical(starts(d), as.POSIXct(c("2020-01-01", "2020-01-02"), tz = "UTC"))
 
+  # Numeric timestamps are seconds since the epoch
   n <- as_acc_df(acc_example_compact(c(0, 10)))
   expect_identical(starts(n), .as.POSIXct(c(0, 10)))
 
-  # Burst frequencies are derived from the timestamps for expanded data, so a
-  # `Date` column must be seconds there too
   e <- acc_example_expanded(seq(0, 0.9, by = 0.1))
-  e$timestamp <- as.Date("2020-01-01") + seq_len(nrow(e)) - 1
+  a <- as_acc_df(e, drop = TRUE)
+
   expect_identical(
-    starts(as_acc_df(e, drop = TRUE)),
-    as.POSIXct("2020-01-01", tz = "UTC")
+    as_acc(e, timestamp = as.POSIXlt(e$timestamp), track_id = e$id, drop = TRUE),
+    a
   )
+  expect_identical(
+    as_acc(e, timestamp = as.numeric(e$timestamp), track_id = e$id, drop = TRUE),
+    a
+  )
+
+  # Burst frequencies are derived from the timestamps for expanded data, so a
+  # `Date` column must be seconds there too: a daily series is 1/86400 Hz.
+  e$timestamp <- as.Date("2020-01-01") + seq_len(nrow(e)) - 1
+
+  daily <- as_acc_df(e, drop = TRUE)
+
+  expect_equal(as.numeric(freqs(daily)), signif(1 / 86400, 6))
+  expect_identical(starts(daily), as.POSIXct("2020-01-01", tz = "UTC"))
 })
