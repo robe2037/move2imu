@@ -31,6 +31,11 @@ test_that("as_acc() rejects timestamp and track_id for move2 input", {
   expect_error(as_acc(alb, track_id = 1), "`track_id` must not be supplied when")
 })
 
+test_that("as_acc() rejects a partially spelled move2 metadata argument", {
+  alb <- albatrosses()
+  expect_error(as_acc(alb, track = 1), "`\\.\\.\\.` must be empty")
+})
+
 test_that("as_acc() dispatches on data.frame subclasses", {
   skip_if_not_installed("tibble")
   skip_if_not_installed("sf")

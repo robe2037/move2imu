@@ -754,11 +754,11 @@ test_that("as_acc() rejects unused arguments for either burst format", {
     ts = .as.POSIXct(1:4)
   )
 
-  expect_error(as_acc_df(albatrosses_df(), typo = 1), "unused argument")
-  expect_error(as_acc_df(gulls_df(), typo = 1), "unused argument")
+  expect_error(as_acc_df(albatrosses_df(), typo = 1), "`\\.\\.\\.` must be empty")
+  expect_error(as_acc_df(gulls_df(), typo = 1), "`\\.\\.\\.` must be empty")
   expect_error(
     as_acc(df, timestamp = df$ts, track_id = NULL, typo = 1),
-    "unused argument"
+    "`\\.\\.\\.` must be empty"
   )
 })
 

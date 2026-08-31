@@ -103,6 +103,7 @@ as_gyro.move2 <- function(x,
                           drop = FALSE,
                           ...) {
   check_move2_dots(...)
+  rlang::check_dots_empty()
 
   as_imu(
     x,
@@ -128,6 +129,7 @@ as_gyro.data.frame <- function(x,
                                merge_continuous = TRUE,
                                drop = FALSE,
                                ...) {
+  rlang::check_dots_empty()
   as_imu(
     x,
     sensor = "gyro",
